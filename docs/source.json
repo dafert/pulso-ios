@@ -18,6 +18,14 @@
       "category": "utilities",
       "versions": [
         {
+          "version": "0.9.8",
+          "date": "2026-11-26T13:35:00-03:00",
+          "localizedDescription": "Novo envio direto como Pacote pro WhatsApp (igual Sticker.ly, sem login) + login com número de telefone corrigido no app para figurinhas com som.",
+          "downloadURL": "https://github.com/dafert/pulso-ios/releases/download/v0.9.8/Pulso-iOS.ipa",
+          "size": 660000,
+          "minOSVersion": "15.0"
+        },
+        {
           "version": "0.9.7",
           "date": "2026-11-26T10:17:00-03:00",
           "localizedDescription": "Primeira versão iOS com áudio Opus nativo, WebP WASM e sincronia exata.",

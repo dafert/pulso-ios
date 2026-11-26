@@ -7,8 +7,8 @@ options:
   createIntermediateGroups: true
 settings:
   base:
-    MARKETING_VERSION: "0.9.7"
-    CURRENT_PROJECT_VERSION: "1"
+    MARKETING_VERSION: "0.9.8"
+    CURRENT_PROJECT_VERSION: "2"
     SWIFT_VERSION: "5.0"
     TARGETED_DEVICE_FAMILY: "1,2"
     IPHONEOS_DEPLOYMENT_TARGET: "15.0"
@@ -39,10 +39,12 @@ targets:
         CFBundleDisplayName: Pulso
         CFBundleName: Pulso
         CFBundleIdentifier: $(PRODUCT_BUNDLE_IDENTIFIER)
-        CFBundleShortVersionString: "0.9.7"
-        CFBundleVersion: "1"
+        CFBundleShortVersionString: "0.9.8"
+        CFBundleVersion: "2"
         CFBundlePackageType: APPL
         LSRequiresIPhoneOS: true
+        LSApplicationQueriesSchemes:
+          - whatsapp
         UILaunchScreen: {}
         UISupportedInterfaceOrientations:
           - UIInterfaceOrientationPortrait

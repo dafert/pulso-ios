@@ -3,7 +3,7 @@
   // src/brand.js
   var BRAND = Object.freeze({
     name: "Pulso",
-    version: "0.9.7",
+    version: "0.9.8",
     description: "Crie figurinhas com som no seu navegador.",
     icon: "icons/pulso"
   });
@@ -924,7 +924,24 @@
     const borders = detectBordersLocal(sample);
     return { borders, focus: suggestFocusLocal(sample, borders) };
   }
-  function* combinationsLocal(preset, available, requested, still) {
+  function* combinationsLocal(preset, available, requested, still, force512 = false) {
+    if (force512) {
+      if (still) {
+        yield { side: 512, fps: 0 };
+        return;
+      }
+      const ceiling512 = requested || 15;
+      const maxFps512 = Math.min(ceiling512, Math.max(1, Math.round(available)));
+      const fpsList = [maxFps512, 15, 12, 10, 8, 6, 5, 4, 3, 2];
+      const seen512 = /* @__PURE__ */ new Set();
+      for (const rawFps of fpsList) {
+        const fps = Math.min(rawFps, maxFps512);
+        if (seen512.has(fps)) continue;
+        seen512.add(fps);
+        yield { side: 512, fps };
+      }
+      return;
+    }
     const maxSide = preset === "leve" ? 384 : 512;
     const ceiling = requested || (preset === "maxima" ? 24 : preset === "leve" ? 15 : 20);
     const maxFps = Math.min(ceiling, Math.max(1, Math.round(available)));
@@ -1110,16 +1127,16 @@
     }
     return __webpWasmPromise ? await __webpWasmPromise : null;
   }
-  async function encodeWebpLocal(source, options, borders, exif, progress2, budget, signal) {
+  async function encodeWebpLocal(source, options, borders, exif, progress2, budget, signal, force512 = false) {
     const still = options.still || !source.animated;
     const maximum2 = options.preset === "maxima";
     const light = options.preset === "leve";
-    const limit = budget ?? (maximum2 ? LIMIT : stickerUploadLimit(!still));
+    const limit = budget ?? (force512 ? (still ? 95e3 : 47e4) : (maximum2 ? LIMIT : stickerUploadLimit(!still)));
     const render = rendererLocal(borders, options);
     const frames = signaturesLocal(source.frames);
     const available = source.length ? (frames.length - 1) / source.length : 1;
     const qBySide = { 512: 75, 448: 72, 384: 68, 320: 64, 256: 60, 192: 55, 160: 52, 128: 48, 96: 45, 64: 40 };
-    const comboList = [...combinationsLocal(options.preset, available, options.fps, still)];
+    const comboList = [...combinationsLocal(options.preset, available, options.fps, still, force512)];
     const canCanvasWebp = await supportsCanvasWebp();
     const wasm = canCanvasWebp ? null : await getWebpWasm();
     if (!canCanvasWebp && !wasm) throw new Error("Codificador WebP indisponível neste dispositivo.");
@@ -1209,7 +1226,7 @@
       signal.throwIfAborted();
       const plan = scheduleLocal(frames, fps, source.length);
       const qHi = light ? Math.min(68, qBySide[side] || 55) : maximum2 ? Math.min(88, (qBySide[side] || 60) + 12) : (qBySide[side] || 60);
-      const qLo = side <= 128 ? 14 : 20;
+      const qLo = force512 ? 10 : (side <= 128 ? 14 : 20);
       const avgHi = await avgFrameBytes(side, qHi);
       const estHi = (avgHi + 32) * plan.length + exif.length + 128;
       if (estHi <= safeLimit) {
@@ -1245,9 +1262,13 @@
         side = comboList[i].side;
         fps = comboList[i].fps;
         plan = scheduleLocal(frames, fps, source.length);
-        quality = side <= 128 ? 14 : 22;
+        quality = force512 ? 12 : (side <= 128 ? 14 : 22);
         bytes = await encodeAll(plan, side, quality);
       }
+    }
+    if (bytes.length > limit && force512 && quality > 8) {
+      quality = 8;
+      bytes = await encodeAll(plan, side, quality);
     }
     if (bytes.length > limit) {
       throw new Error("A figurinha ultrapassa o limite para este envio. Reduza o trecho visual ou escolha um enquadramento mais simples.");
@@ -1283,7 +1304,7 @@
       if (data.what === "inspect") return { ...framing, duration: source.duration, animated: source.animated, decoder: source.decoder };
       const exif = await exifFor(data.pack, data.author, data.ogg);
       const options = data.suggestFocus ? { ...data.options, focus: framing.focus } : data.options;
-      const webp = await encodeWebpLocal(source, options, framing.borders, exif, progress2, data.budget, signal);
+      const webp = await encodeWebpLocal(source, options, framing.borders, exif, progress2, data.budget, signal, data.force512 === true);
       return { webp, framing, duration: source.length, decoder: source.decoder };
     } finally {
       source?.frames.forEach((frame) => frame.image.close());
@@ -1621,9 +1642,18 @@
     el.cancelar.textContent = operation?.batch ? "Parar fila" : "Cancelar";
     el["acoes-fila"].hidden = !jobs.length;
     el["enviar-fila"].disabled = busy || !jobs.some(batchEligible);
+    if (el["enviar-fila-pacote"]) {
+      el["enviar-fila-pacote"].hidden = !window.__PULSO_IOS__;
+      el["enviar-fila-pacote"].disabled = busy || !jobs.length;
+      el["enviar-fila-pacote"].textContent = `📦 Pacote da fila (${jobs.length}) · sem login`;
+    }
+    if (el["enviar-pacote"]) {
+      el["enviar-pacote"].hidden = !window.__PULSO_IOS__;
+      el["enviar-pacote"].disabled = !ready;
+    }
     const pending = jobs.filter(batchEligible).length;
     const uncertain = jobs.filter((job) => job.deliveryUncertain).length;
-    el["enviar-fila"].textContent = pending ? `Enviar fila · ${pending}` : uncertain ? `Confira ${uncertain} no WhatsApp` : "Fila enviada";
+    el["enviar-fila"].textContent = pending ? `🔊 Enviar fila com som · ${pending}` : uncertain ? `Confira ${uncertain} no WhatsApp` : "Fila enviada";
     el.resultado.dataset.drag = ready && active.options.mode === "cortar";
   }
   async function perform(task, cancelable = true, batch = false) {
@@ -2013,7 +2043,7 @@
     job.audioWarning = false;
     job.audio = { ...rendered, url: URL.createObjectURL(new Blob([rendered.bytes], { type: "audio/ogg; codecs=opus" })) };
   }
-  async function prepare(job, signal, automatic = false, inBatch = false, budget) {
+  async function prepare(job, signal, automatic = false, inBatch = false, budget, force512 = false) {
     if (!job.range) {
       if (!job.imageType) {
         try {
@@ -2043,29 +2073,35 @@
         updatePreview();
       }
     }
-    await prepareAudio(job, signal, true);
-    cachedAudio = void 0;
-    if (inBatch && job.audioWarning && job.sound !== "mudo") {
-      throw new Error("Áudio do vídeo ilegível. Escolha Sem som ou uma faixa separada.");
+    if (!force512) {
+      await prepareAudio(job, signal, true);
+      cachedAudio = void 0;
+      if (inBatch && job.audioWarning && job.sound !== "mudo") {
+        throw new Error("Áudio do vídeo ilegível. Escolha Sem som ou uma faixa separada.");
+      }
     }
     const suggestFocus = !job.framing;
-    const videoRange = job.sound === "original" && job.audio?.duration
+    let videoRange = !force512 && job.sound === "original" && job.audio?.duration
       ? {
           start: job.range.start + (job.audio.offset || 0),
           end: Math.min(job.duration || job.range.end, job.range.start + (job.audio.offset || 0) + job.audio.duration)
         }
       : job.range;
+    if (force512 && videoRange.end - videoRange.start > 9.5) {
+      videoRange = { start: videoRange.start, end: videoRange.start + 9.5 };
+    }
     const answer = await workerTask({
       what: "encode",
       file: job.file,
       imageType: job.imageType,
       range: videoRange,
-      options: budget ? { ...job.options, preset: "equilibrado" } : job.options,
+      options: budget || force512 ? { ...job.options, preset: "equilibrado" } : job.options,
       suggestFocus,
       budget,
+      force512,
       pack: job.pack,
       author: job.author,
-      ogg: job.audio?.bytes ?? null
+      ogg: force512 ? null : (job.audio?.bytes ?? null)
     }, signal, progress);
     signal.throwIfAborted();
     clearResult(job);
@@ -2109,15 +2145,89 @@
     try {
       const result = await within(chrome.runtime.sendMessage({ channel: "pulso-editor", what: "status" }), 5e3, "O autoteste demorou demais.");
       const level = result.level || "incompativel";
-      const titles = { compativel: "Compatível", parcial: "Parcial", incompativel: "Incompatível" };
+      const titles = { compativel: "Compatível", parcial: "Parcial", incompativel: "WhatsApp (som) desconectado" };
       el.compatibilidade.dataset.level = level;
-      el.compatibilidade.textContent = titles[level] + " · " + result.detail;
+      if (window.__PULSO_IOS__ && level === "incompativel") {
+        el.compatibilidade.textContent = "WhatsApp (som) desconectado · Use Pacote (sem login) ou conecte seu número.";
+      } else {
+        el.compatibilidade.textContent = titles[level] + " · " + result.detail;
+      }
+      if (el["conectar-wa"]) el["conectar-wa"].hidden = !(window.__PULSO_IOS__ && level === "incompativel");
     } catch (error) {
       el.compatibilidade.dataset.level = "incompativel";
-      el.compatibilidade.textContent = "Incompatível · " + friendly(error);
+      el.compatibilidade.textContent = window.__PULSO_IOS__
+        ? "WhatsApp (som) desconectado · Use Pacote (sem login) ou conecte seu número."
+        : "Incompatível · " + friendly(error);
+      if (el["conectar-wa"]) el["conectar-wa"].hidden = !window.__PULSO_IOS__;
     } finally {
       el.rever.disabled = false;
     }
+  }
+  async function buildTrayPngBase64(webpUrl) {
+    const c = document.createElement("canvas");
+    c.width = 96;
+    c.height = 96;
+    const ctx = c.getContext("2d");
+    try {
+      const img = new Image();
+      img.src = webpUrl;
+      await new Promise((resolve, reject) => {
+        img.onload = resolve;
+        img.onerror = reject;
+      });
+      ctx.clearRect(0, 0, 96, 96);
+      ctx.drawImage(img, 0, 0, 96, 96);
+    } catch {
+      ctx.fillStyle = "#6137a4";
+      ctx.fillRect(0, 0, 96, 96);
+      ctx.fillStyle = "#ffffff";
+      ctx.font = "bold 46px system-ui, sans-serif";
+      ctx.textAlign = "center";
+      ctx.textBaseline = "middle";
+      ctx.fillText("P", 48, 50);
+    }
+    return c.toDataURL("image/png").split(",")[1];
+  }
+  async function sendJobsAsPack(targetJobs, signal) {
+    if (typeof window.__pulsoExportStickerPack !== "function") {
+      throw new Error("Exportação de pacote disponível apenas no app Pulso iOS.");
+    }
+    if (!targetJobs.length) throw new Error("Escolha ao menos um vídeo ou imagem primeiro.");
+    const list = targetJobs.slice(0, 30);
+    if (operation?.batch) operation.batch.total = list.length;
+    for (const [index, job] of list.entries()) {
+      signal.throwIfAborted();
+      if (operation?.batch) operation.batch.index = index;
+      const r = job.result;
+      const needsPackEncode = !r || r.side !== 512 || r.bytes.length > (r.animated ? 485e3 : 98e3) || (r.animated && r.duration > 9.8);
+      if (needsPackEncode) {
+        progress("Preparando 512×512 para pacote (" + job.file.name + ")…", 0.1);
+        await prepare(job, signal, false, true, null, true);
+      }
+    }
+    signal.throwIfAborted();
+    const isAnimatedPack = list.some((j) => j.result?.animated);
+    progress("Montando pacote para o WhatsApp…", 0.92);
+    const stickers = [];
+    for (const job of list) {
+      let bytes = job.result.bytes;
+      if (isAnimatedPack && !job.result.animated) {
+        bytes = animationFallback([{ bytes, duration: 500 }, { bytes, duration: 500 }], 512);
+      }
+      stickers.push({ webpBase64: toBase64(bytes), emojis: ["🔥"] });
+    }
+    const trayPngBase64 = await buildTrayPngBase64(list[0].result.url);
+    const packName = (active?.pack || preferences.pack || "Pulso Stickers").trim() || "Pulso Stickers";
+    const publisher = (active?.author || preferences.author || "Pulso").trim() || "Pulso";
+    const resp = await window.__pulsoExportStickerPack({
+      name: packName,
+      publisher,
+      animated: isAnimatedPack,
+      trayPngBase64,
+      stickers
+    });
+    if (!resp?.ok) throw new Error(resp?.detail || "Não foi possível abrir o WhatsApp para importar o pacote.");
+    status(resp.detail || "Pacote enviado para o WhatsApp! Toque em Salvar no WhatsApp.");
   }
   async function prepareForSend(job, signal) {
     await retag(job);
@@ -2305,8 +2415,19 @@
     if (media instanceof HTMLVideoElement) media.pause();
   });
   el.rever.addEventListener("click", checkCompatibility);
+  if (el["conectar-wa"]) {
+    el["conectar-wa"].addEventListener("click", () => {
+      if (typeof window.__pulsoOpenWhatsAppLogin === "function") window.__pulsoOpenWhatsAppLogin(true);
+    });
+  }
   el.automatico.addEventListener("click", () => perform((signal) => prepare(active, signal, true)));
   el.preparar.addEventListener("click", () => perform((signal) => prepare(active, signal)));
+  if (el["enviar-pacote"]) {
+    el["enviar-pacote"].addEventListener("click", () => perform((signal) => sendJobsAsPack(active ? [active] : [], signal)));
+  }
+  if (el["enviar-fila-pacote"]) {
+    el["enviar-fila-pacote"].addEventListener("click", () => perform((signal) => sendJobsAsPack(jobs, signal), true, true));
+  }
   el.enviar.addEventListener("click", () => {
     const prepared = active?.result;
     const needsEncoding = !prepared || prepared.bytes.length > stickerUploadLimit(prepared.animated);

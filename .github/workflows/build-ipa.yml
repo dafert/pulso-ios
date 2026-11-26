@@ -47,6 +47,22 @@ jobs:
           zip -r -9 Pulso-iOS.ipa Payload
           ls -lh Pulso-iOS.ipa
 
+      - name: Publicar Pulso-iOS.ipa (Artifacts e Release v0.9.8)
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        run: |
+          if ! gh release view v0.9.8 >/dev/null 2>&1; then
+            gh release create v0.9.8 --title "Pulso iOS 0.9.8" --notes "Pacote direto pro WhatsApp (sem login) + Login corrigido com numero de telefone para figurinhas com som."
+          fi
+          gh release upload v0.9.8 Pulso-iOS.ipa --clobber
+
+      - name: Publicar Artifact Pulso-iOS.ipa
+        uses: actions/upload-artifact@v4
+        with:
+          name: Pulso-iOS-ipa
+          path: Pulso-iOS.ipa
+          retention-days: 30
+
       - name: Assinar Pulso-iOS-signed.ipa (se Secrets estiverem configurados)
         id: sign
         env:
@@ -108,22 +124,20 @@ jobs:
           echo "signed=true" >> "$GITHUB_OUTPUT"
 
       - name: Publicar Artifacts
+        if: steps.sign.outputs.signed == 'true'
         uses: actions/upload-artifact@v4
         with:
-          name: Pulso-iOS-ipa
+          name: Pulso-iOS-signed-ipa
           path: |
             Pulso-iOS.ipa
             Pulso-iOS-signed.ipa
           retention-days: 30
 
-      - name: Atualizar Release v0.9.7 com os .ipa
+      - name: Atualizar Release v0.9.8 com .ipa assinado
+        if: steps.sign.outputs.signed == 'true'
         env:
           GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
         run: |
-          if ! gh release view v0.9.7 >/dev/null 2>&1; then
-            gh release create v0.9.7 --title "Pulso iOS 0.9.7" --notes "Build automático do Pulso iOS 0.9.7."
-          fi
-          gh release upload v0.9.7 Pulso-iOS.ipa --clobber
           if [ -f Pulso-iOS-signed.ipa ]; then
-            gh release upload v0.9.7 Pulso-iOS-signed.ipa --clobber
+            gh release upload v0.9.8 Pulso-iOS-signed.ipa --clobber
           fi

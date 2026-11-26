@@ -40,6 +40,14 @@
     } catch (e) {}
   };
 
+  window.__pulsoOpenWhatsAppLogin = function (clickPhone) {
+    return callNative("openWhatsAppTab", { clickPhoneLogin: !!clickPhone });
+  };
+
+  window.__pulsoExportStickerPack = function (pack) {
+    return callNative("exportStickerPack", pack);
+  };
+
   function u8ToB64(bytes) {
     var out = "";
     for (var i = 0; i < bytes.length; i += 12288) {

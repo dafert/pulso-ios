@@ -186,3 +186,7 @@ body.ios-app .picker{padding:.5rem 1rem;font-size:.95rem}
 body.ios-app .block-button{width:100%}
 body.ios-app .exports{display:grid;grid-template-columns:1fr 1fr;gap:8px}
 body.ios-app .exports button{width:100%}
+body.ios-app #fechar-painel{display:none}
+.pack-btn{background:#25a365;color:#fff;font-weight:750}
+.batch-buttons{display:flex;gap:.55rem;flex-wrap:wrap}
+@media(max-width:500px){.batch-buttons{flex-direction:column;width:100%}.batch-buttons button{width:100%}}
