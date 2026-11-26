@@ -1,0 +1,12 @@
+services:
+  - type: web
+    name: pulso-figurinhas-com-som
+    runtime: docker
+    dockerfilePath: ./server/Dockerfile
+    dockerContext: .
+    plan: starter
+    envVars:
+      - key: PORT
+        value: "8787"
+      - key: MAX_SESSIONS
+        value: "5"

@@ -2291,39 +2291,36 @@
     refreshQueue();
     return result;
   }
+  window.__pulsoRefreshStatus = () => { if (typeof checkCompatibility === "function") checkCompatibility(); };
   async function send(job, signal) {
     if (window.__PULSO_WEB__) {
+      const srv = typeof window.__pulsoServerState === "function" ? window.__pulsoServerState() : { connected: false };
       if (!job.result) await prepare(job, signal);
-      await retag(job);
-      const baseName = job.file.name.replace(/\.[^.]+$/, "");
-      const webpFile = new File([job.result.bytes], baseName + ".webp", { type: "image/webp" });
-      const files = [webpFile];
-      if (job.audio) {
-        const ext = job.audio.ext || "ogg";
-        files.push(new File([job.audio.bytes], baseName + "." + ext, { type: job.audio.mime || "audio/ogg" }));
+      await prepareForSend(job, signal);
+      signal.throwIfAborted();
+      if (srv.connected && typeof window.__pulsoSendViaServer === "function") {
+        progress("Enviando figurinha com som pro seu WhatsApp…", 0.94);
+        const resp = await window.__pulsoSendViaServer({
+          webpBase64: toBase64(job.result.bytes),
+          audioBase64: job.audio ? toBase64(job.audio.bytes) : null,
+          audioExt: job.audio ? (job.audio.ext || "ogg") : null,
+          duration: job.audio ? Math.max(1, Math.round(job.audio.duration)) : 0,
+          animated: job.result.animated,
+          side: job.result.side || SIDE,
+          pack: job.pack || "",
+          author: job.author || ""
+        });
+        job.sentResult = job.result;
+        job.delivered = true;
+        job.deliveryUncertain = false;
+        job.batchError = "";
+        refreshQueue();
+        status(resp.detail || "🔊 Figurinha com som enviada para sua conversa 'Você' no WhatsApp!");
+        return;
       }
-      if (typeof window.__pulsoShareFiles === "function") {
-        try {
-          const shared = await window.__pulsoShareFiles(files, baseName);
-          if (shared) {
-            job.delivered = true;
-            refreshQueue();
-            status("Arquivos compartilhados! Você também pode baixar separadamente abaixo.");
-            return;
-          }
-        } catch (err) {
-          if (err && err.name === "AbortError") {
-            status("Compartilhamento cancelado.");
-            return;
-          }
-        }
-      }
-      download(job.result.url, "webp");
-      if (job.audio) download(job.audio.url, job.audio.ext || "ogg");
-      job.delivered = true;
-      refreshQueue();
-      status(job.audio ? "Figurinha (.webp) e áudio baixados!" : "Figurinha (.webp) baixada!");
-      return;
+      const card = document.getElementById("wa-connect-card");
+      if (card) card.scrollIntoView({ behavior: "smooth", block: "start" });
+      throw new Error("Conecte seu WhatsApp no painel 'Conectar seu WhatsApp' no topo da página para enviar com som (ou use os botões Baixar abaixo).");
     }
     if (!job.result) {
       await prepare(job, signal);
@@ -2362,6 +2359,35 @@
       }
       if (signal.aborted) break;
       if (window.__PULSO_WEB__) {
+        const srv = typeof window.__pulsoServerState === "function" ? window.__pulsoServerState() : { connected: false };
+        if (srv.connected && typeof window.__pulsoSendViaServer === "function") {
+          try {
+            progress("Enviando com som pro WhatsApp…", 0.94);
+            await window.__pulsoSendViaServer({
+              webpBase64: toBase64(job.result.bytes),
+              audioBase64: job.audio ? toBase64(job.audio.bytes) : null,
+              audioExt: job.audio ? (job.audio.ext || "ogg") : null,
+              duration: job.audio ? Math.max(1, Math.round(job.audio.duration)) : 0,
+              animated: job.result.animated,
+              side: job.result.side || SIDE,
+              pack: job.pack || "",
+              author: job.author || ""
+            });
+            job.sentResult = job.result;
+            job.delivered = true;
+            job.batchError = "";
+            sent++;
+            refreshQueue();
+            if (index + 1 < pending.length && !signal.aborted) await new Promise((r) => setTimeout(r, 1200));
+            continue;
+          } catch (error) {
+            sendError = friendly(error);
+            job.batchError = sendError;
+            invalid++;
+            refreshQueue();
+            continue;
+          }
+        }
         const prevActive = active;
         active = job;
         download(job.result.url, "webp");
