@@ -97,11 +97,14 @@
     <p>Crie figurinhas animadas com som sincronizado direto no seu iPhone 11 e envie para o WhatsApp.</p>
 
     <div class="actions">
-      <a class="btn hot" href="itms-services://?action=download-manifest&url=https://dafert.github.io/pulso-ios/manifest.plist">
-        📲 Instalar Direto no Safari (OTA · requer .ipa assinado)
+      <!-- Botão pré-pronto para você colocar seu link manual -->
+      <!-- Para trocar o link manualmente no arquivo, edite o href abaixo: -->
+      <a class="btn hot" id="custom-install-btn" href="itms-services://?action=download-manifest&url=https://SEU-LINK-AQUI/manifest.plist">
+        🚀 Instalar do Servidor Externo (OTA Manual)
       </a>
+
       <a class="btn primary" href="https://github.com/dafert/pulso-ios/releases/download/v0.9.7/Pulso-iOS.ipa">
-        ⬇ Baixar Pulso-iOS.ipa
+        ⬇ Baixar Pulso-iOS.ipa Direto
       </a>
       <a class="btn ghost" href="sidestore://source?url=https://dafert.github.io/pulso-ios/source.json">
         ⚡ Instalar via SideStore
@@ -116,6 +119,16 @@
         📋 Copiar link da Fonte (SideStore / AltStore)
       </button>
     </div>
+
+    <!-- Campo interativo para testar qualquer URL de manifest externa sem precisar editar código -->
+    <div class="box" style="margin-bottom: 16px;">
+      <strong>Instalar por URL Externa Personalizada:</strong>
+      <p style="margin: 6px 0 10px; font-size: .82rem;">Cole abaixo o link do seu <code>manifest.plist</code> hospedado em outro servidor:</p>
+      <input type="url" id="custom-manifest-url" placeholder="https://seu-servidor.com/manifest.plist" style="width: 100%; padding: 10px 12px; border-radius: 10px; border: 1px solid var(--border); background: #231a30; color: #fff; font-size: .88rem; margin-bottom: 8px;">
+      <button class="btn primary" type="button" id="btn-trigger-custom" style="min-height: 42px; font-size: .92rem;">
+        📲 Instalar este Manifest no Safari
+      </button>
+    </div>
     <div class="ok" id="msg"></div>
 
     <div class="box">
@@ -128,6 +141,18 @@
     </div>
   </main>
   <script>
+    document.getElementById("btn-trigger-custom").addEventListener("click", () => {
+      let rawUrl = (document.getElementById("custom-manifest-url").value || "").trim();
+      if (!rawUrl) {
+        alert("Por favor, digite ou cole a URL do seu manifest.plist");
+        return;
+      }
+      if (!rawUrl.startsWith("itms-services://")) {
+        rawUrl = "itms-services://?action=download-manifest&url=" + encodeURIComponent(rawUrl);
+      }
+      window.location.href = rawUrl;
+    });
+
     document.getElementById("copy-source").addEventListener("click", async () => {
       const url = "https://dafert.github.io/pulso-ios/source.json";
       try {
