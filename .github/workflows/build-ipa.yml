@@ -65,8 +65,8 @@ jobs:
           P12_FILE="$RUNNER_TEMP/cert.p12"
           PROV_FILE="$RUNNER_TEMP/profile.mobileprovision"
 
-          echo "$IOS_P12_BASE64" | base64 --decode > "$P12_FILE"
-          echo "$IOS_PROVISION_BASE64" | base64 --decode > "$PROV_FILE"
+          printf '%s' "$IOS_P12_BASE64" | tr -d '\r\n' | base64 --decode > "$P12_FILE"
+          printf '%s' "$IOS_PROVISION_BASE64" | tr -d '\r\n' | base64 --decode > "$PROV_FILE"
 
           security create-keychain -p "$KEYCHAIN_PASS" "$KEYCHAIN"
           security set-keychain-settings -lut 21600 "$KEYCHAIN"
@@ -89,6 +89,18 @@ jobs:
           mkdir -p PayloadSigned
           cp -R build/Build/Products/Release-iphoneos/Pulso.app PayloadSigned/Pulso.app
           cp "$PROV_FILE" PayloadSigned/Pulso.app/embedded.mobileprovision
+
+          # Ajusta application-identifier para perfis wildcard (*) ou explicitos
+          APP_ID=$(/usr/libexec/PlistBuddy -c "Print :application-identifier" "$RUNNER_TEMP/entitlements.plist" 2>/dev/null || true)
+          if [ -n "$APP_ID" ]; then
+            TEAM_PREFIX="${APP_ID%%.*}"
+            ID_SUFFIX="${APP_ID#*.}"
+            if [ "$ID_SUFFIX" = "*" ]; then
+              /usr/libexec/PlistBuddy -c "Set :application-identifier ${TEAM_PREFIX}.app.pulso.ios" "$RUNNER_TEMP/entitlements.plist"
+            elif [ "$ID_SUFFIX" != "app.pulso.ios" ]; then
+              /usr/libexec/PlistBuddy -c "Set :CFBundleIdentifier ${ID_SUFFIX}" "PayloadSigned/Pulso.app/Info.plist"
+            fi
+          fi
 
           codesign --force --sign "$IDENTITY" --entitlements "$RUNNER_TEMP/entitlements.plist" --timestamp=none PayloadSigned/Pulso.app
           (cd PayloadSigned && zip -r -9 ../Pulso-iOS-signed.ipa Pulso.app)
