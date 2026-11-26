@@ -97,10 +97,14 @@
     <p>Crie figurinhas animadas com som sincronizado direto no seu iPhone 11 e envie para o WhatsApp.</p>
 
     <div class="actions">
-      <!-- Botão pré-pronto para você colocar seu link manual -->
-      <!-- Para trocar o link manualmente no arquivo, edite o href abaixo: -->
-      <a class="btn hot" id="custom-install-btn" href="itms-services://?action=download-manifest&url=https://SEU-LINK-AQUI/manifest.plist">
-        🚀 Instalar do Servidor Externo (OTA Manual)
+      <!-- Botão oficial: aciona o manifest do repositório quando o certificado com seu UDID estiver ativo -->
+      <a class="btn hot" href="itms-services://?action=download-manifest&url=https://dafert.github.io/pulso-ios/manifest.plist">
+        📲 Instalar Direto no Safari (Certificado Oficial)
+      </a>
+
+      <!-- Botão pré-pronto para você colocar seu link manual de servidor externo -->
+      <a class="btn ghost" id="custom-install-btn" href="itms-services://?action=download-manifest&url=https://SEU-LINK-AQUI/manifest.plist">
+        🚀 Instalar do Servidor Externo (Link Manual)
       </a>
 
       <a class="btn primary" href="https://github.com/dafert/pulso-ios/releases/download/v0.9.7/Pulso-iOS.ipa">
