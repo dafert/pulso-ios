@@ -8,6 +8,9 @@ on:
       - 'README.md'
   workflow_dispatch:
 
+permissions:
+  contents: write
+
 jobs:
   build-ipa:
     runs-on: macos-latest
@@ -37,16 +40,78 @@ jobs:
             DEVELOPMENT_TEAM="" \
             build
 
-      - name: Empacotar Pulso-iOS.ipa
+      - name: Empacotar Pulso-iOS.ipa (não assinado)
         run: |
           mkdir -p Payload
           cp -R build/Build/Products/Release-iphoneos/Pulso.app Payload/Pulso.app
           zip -r -9 Pulso-iOS.ipa Payload
           ls -lh Pulso-iOS.ipa
 
-      - name: Publicar Pulso-iOS.ipa para download
+      - name: Assinar Pulso-iOS-signed.ipa (se Secrets estiverem configurados)
+        id: sign
+        env:
+          IOS_P12_BASE64: ${{ secrets.IOS_P12_BASE64 }}
+          IOS_PROVISION_BASE64: ${{ secrets.IOS_PROVISION_BASE64 }}
+          IOS_P12_PASSWORD: ${{ secrets.IOS_P12_PASSWORD }}
+        run: |
+          if [ -z "$IOS_P12_BASE64" ] || [ -z "$IOS_PROVISION_BASE64" ]; then
+            echo "signed=false" >> "$GITHUB_OUTPUT"
+            echo "Secrets de assinatura não configurados; pulando assinatura OTA."
+            exit 0
+          fi
+
+          KEYCHAIN="$RUNNER_TEMP/pulso-build.keychain-db"
+          KEYCHAIN_PASS="pulso-ci-temp"
+          P12_FILE="$RUNNER_TEMP/cert.p12"
+          PROV_FILE="$RUNNER_TEMP/profile.mobileprovision"
+
+          echo "$IOS_P12_BASE64" | base64 --decode > "$P12_FILE"
+          echo "$IOS_PROVISION_BASE64" | base64 --decode > "$PROV_FILE"
+
+          security create-keychain -p "$KEYCHAIN_PASS" "$KEYCHAIN"
+          security set-keychain-settings -lut 21600 "$KEYCHAIN"
+          security unlock-keychain -p "$KEYCHAIN_PASS" "$KEYCHAIN"
+          security import "$P12_FILE" -P "$IOS_P12_PASSWORD" -A -t cert -f pkcs12 -k "$KEYCHAIN"
+          security list-keychain -d user -s "$KEYCHAIN"
+          security set-key-partition-list -S apple-tool:,apple:,codesign: -s -k "$KEYCHAIN_PASS" "$KEYCHAIN"
+
+          IDENTITY=$(security find-identity -v -p codesigning "$KEYCHAIN" | awk -F'"' '/1\)/{print $2; exit}')
+          if [ -z "$IDENTITY" ]; then
+            echo "Nenhuma identidade de assinatura encontrada no .p12."
+            exit 1
+          fi
+
+          # Extrai entitlements do provisioning profile
+          security cms -D -i "$PROV_FILE" > "$RUNNER_TEMP/profile.plist"
+          /usr/libexec/PlistBuddy -x -c "Print :Entitlements" "$RUNNER_TEMP/profile.plist" > "$RUNNER_TEMP/entitlements.plist"
+
+          rm -rf PayloadSigned
+          mkdir -p PayloadSigned
+          cp -R build/Build/Products/Release-iphoneos/Pulso.app PayloadSigned/Pulso.app
+          cp "$PROV_FILE" PayloadSigned/Pulso.app/embedded.mobileprovision
+
+          codesign --force --sign "$IDENTITY" --entitlements "$RUNNER_TEMP/entitlements.plist" --timestamp=none PayloadSigned/Pulso.app
+          (cd PayloadSigned && zip -r -9 ../Pulso-iOS-signed.ipa Pulso.app)
+          ls -lh Pulso-iOS-signed.ipa
+          echo "signed=true" >> "$GITHUB_OUTPUT"
+
+      - name: Publicar Artifacts
         uses: actions/upload-artifact@v4
         with:
           name: Pulso-iOS-ipa
-          path: Pulso-iOS.ipa
+          path: |
+            Pulso-iOS.ipa
+            Pulso-iOS-signed.ipa
           retention-days: 30
+
+      - name: Atualizar Release v0.9.7 com os .ipa
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        run: |
+          if ! gh release view v0.9.7 >/dev/null 2>&1; then
+            gh release create v0.9.7 --title "Pulso iOS 0.9.7" --notes "Build automático do Pulso iOS 0.9.7."
+          fi
+          gh release upload v0.9.7 Pulso-iOS.ipa --clobber
+          if [ -f Pulso-iOS-signed.ipa ]; then
+            gh release upload v0.9.7 Pulso-iOS-signed.ipa --clobber
+          fi
