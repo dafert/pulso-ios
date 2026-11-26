@@ -102,6 +102,12 @@
         📲 Instalar Direto no Safari (Certificado Oficial)
       </a>
 
+      <!-- Botão pré-pronto para Perfil de Configuração (.mobileconfig) -->
+      <!-- Você pode alterar o texto e o arquivo (href) como quiser -->
+      <a class="btn ghost" id="main-mobileconfig-btn" href="perfil.mobileconfig">
+        🛡️ <span id="main-mobileconfig-label">Instalar Perfil (.mobileconfig)</span>
+      </a>
+
       <!-- Botão pré-pronto para você colocar seu link manual de servidor externo -->
       <a class="btn ghost" id="custom-install-btn" href="itms-services://?action=download-manifest&url=https://SEU-LINK-AQUI/manifest.plist">
         🚀 Instalar do Servidor Externo (Link Manual)
@@ -133,6 +139,22 @@
         📲 Instalar este Manifest no Safari
       </button>
     </div>
+
+    <!-- Campo interativo para Perfil .mobileconfig com Nome e Link personalizáveis -->
+    <div class="box" style="margin-bottom: 16px;">
+      <strong>Perfil de Configuração (.mobileconfig):</strong>
+      <p style="margin: 6px 0 10px; font-size: .82rem;">Defina o nome do botão e o link do seu arquivo <code>.mobileconfig</code>:</p>
+      <input type="text" id="input-config-name" placeholder="Nome do botão (ex: Meu Perfil)" value="Instalar Perfil (.mobileconfig)" style="width: 100%; padding: 10px 12px; border-radius: 10px; border: 1px solid var(--border); background: #231a30; color: #fff; font-size: .88rem; margin-bottom: 8px;">
+      <input type="text" id="input-config-url" placeholder="URL ou nome do arquivo (ex: perfil.mobileconfig)" value="perfil.mobileconfig" style="width: 100%; padding: 10px 12px; border-radius: 10px; border: 1px solid var(--border); background: #231a30; color: #fff; font-size: .88rem; margin-bottom: 8px;">
+      <div style="display: flex; gap: 8px;">
+        <button class="btn hot" type="button" id="btn-download-config" style="min-height: 42px; font-size: .92rem; flex: 1;">
+          🛡️ Baixar / Instalar Perfil
+        </button>
+        <button class="btn ghost" type="button" id="btn-save-config" style="min-height: 42px; font-size: .92rem;">
+          💾 Salvar Nome
+        </button>
+      </div>
+    </div>
     <div class="ok" id="msg"></div>
 
     <div class="box">
@@ -145,6 +167,33 @@
     </div>
   </main>
   <script>
+    // Gerenciamento do Perfil .mobileconfig com Nome e Link personalizáveis
+    const savedName = localStorage.getItem("pulso_config_name");
+    const savedUrl = localStorage.getItem("pulso_config_url");
+    if (savedName) {
+      document.getElementById("main-mobileconfig-label").textContent = savedName;
+      document.getElementById("input-config-name").value = savedName;
+    }
+    if (savedUrl) {
+      document.getElementById("main-mobileconfig-btn").href = savedUrl;
+      document.getElementById("input-config-url").value = savedUrl;
+    }
+
+    document.getElementById("btn-save-config").addEventListener("click", () => {
+      const name = (document.getElementById("input-config-name").value || "").trim() || "Instalar Perfil (.mobileconfig)";
+      const url = (document.getElementById("input-config-url").value || "").trim() || "perfil.mobileconfig";
+      localStorage.setItem("pulso_config_name", name);
+      localStorage.setItem("pulso_config_url", url);
+      document.getElementById("main-mobileconfig-label").textContent = name;
+      document.getElementById("main-mobileconfig-btn").href = url;
+      document.getElementById("msg").textContent = "Nome e Link do perfil salvos com sucesso!";
+    });
+
+    document.getElementById("btn-download-config").addEventListener("click", () => {
+      const url = (document.getElementById("input-config-url").value || "").trim() || "perfil.mobileconfig";
+      window.location.href = url;
+    });
+
     document.getElementById("btn-trigger-custom").addEventListener("click", () => {
       let rawUrl = (document.getElementById("custom-manifest-url").value || "").trim();
       if (!rawUrl) {
