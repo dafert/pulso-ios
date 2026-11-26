@@ -1,0 +1,56 @@
+name: Pulso
+options:
+  bundleIdPrefix: app.pulso
+  deploymentTarget:
+    iOS: "15.0"
+  xcodeVersion: "16.0"
+  createIntermediateGroups: true
+settings:
+  base:
+    MARKETING_VERSION: "0.9.7"
+    CURRENT_PROJECT_VERSION: "1"
+    SWIFT_VERSION: "5.0"
+    TARGETED_DEVICE_FAMILY: "1,2"
+    IPHONEOS_DEPLOYMENT_TARGET: "15.0"
+    CODE_SIGNING_ALLOWED: "NO"
+    CODE_SIGNING_REQUIRED: "NO"
+    CODE_SIGN_IDENTITY: ""
+    DEVELOPMENT_TEAM: ""
+targets:
+  Pulso:
+    type: application
+    platform: iOS
+    sources:
+      - path: Pulso
+        excludes:
+          - "Web/**"
+      - path: Pulso/Web
+        type: folder
+        buildPhase: resources
+    settings:
+      base:
+        PRODUCT_BUNDLE_IDENTIFIER: app.pulso.ios
+        INFOPLIST_FILE: Pulso/Info.plist
+        PRODUCT_NAME: Pulso
+        ASSETCATALOG_COMPILER_APPICON_NAME: AppIcon
+    info:
+      path: Pulso/Info.plist
+      properties:
+        CFBundleDisplayName: Pulso
+        CFBundleName: Pulso
+        CFBundleIdentifier: $(PRODUCT_BUNDLE_IDENTIFIER)
+        CFBundleShortVersionString: "0.9.7"
+        CFBundleVersion: "1"
+        CFBundlePackageType: APPL
+        LSRequiresIPhoneOS: true
+        UILaunchScreen: {}
+        UISupportedInterfaceOrientations:
+          - UIInterfaceOrientationPortrait
+          - UIInterfaceOrientationLandscapeLeft
+          - UIInterfaceOrientationLandscapeRight
+        NSPhotoLibraryUsageDescription: "Selecionar vídeos e imagens para criar figurinhas com som."
+        NSPhotoLibraryAddUsageDescription: "Salvar figurinhas e áudios gerados."
+        NSCameraUsageDescription: "Usar câmera no WhatsApp Web."
+        NSMicrophoneUsageDescription: "Usar microfone e áudio no WhatsApp Web."
+        NSAppTransportSecurity:
+          NSAllowsArbitraryLoadsInWebContent: true

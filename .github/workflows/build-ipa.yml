@@ -1,0 +1,49 @@
+name: Compilar Pulso iOS (.ipa)
+
+on:
+  push:
+    branches: [ main, master ]
+  workflow_dispatch:
+
+jobs:
+  build-ipa:
+    runs-on: macos-latest
+
+    steps:
+      - name: Baixar código
+        uses: actions/checkout@v4
+
+      - name: Instalar XcodeGen
+        run: brew install xcodegen
+
+      - name: Gerar projeto Xcode
+        run: xcodegen generate
+
+      - name: Compilar Pulso.app (Release ARM64 sem assinatura)
+        run: |
+          xcodebuild \
+            -project Pulso.xcodeproj \
+            -scheme Pulso \
+            -configuration Release \
+            -sdk iphoneos \
+            -arch arm64 \
+            -derivedDataPath build \
+            CODE_SIGNING_ALLOWED=NO \
+            CODE_SIGNING_REQUIRED=NO \
+            CODE_SIGN_IDENTITY="" \
+            DEVELOPMENT_TEAM="" \
+            build
+
+      - name: Empacotar Pulso-iOS.ipa
+        run: |
+          mkdir -p Payload
+          cp -R build/Build/Products/Release-iphoneos/Pulso.app Payload/Pulso.app
+          zip -r -9 Pulso-iOS.ipa Payload
+          ls -lh Pulso-iOS.ipa
+
+      - name: Publicar Pulso-iOS.ipa para download
+        uses: actions/upload-artifact@v4
+        with:
+          name: Pulso-iOS-ipa
+          path: Pulso-iOS.ipa
+          retention-days: 30
