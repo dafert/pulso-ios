@@ -3,7 +3,7 @@
   // src/brand.js
   var BRAND = Object.freeze({
     name: "Pulso",
-    version: "0.9.8",
+    version: "0.9.9",
     description: "Crie figurinhas com som no seu navegador.",
     icon: "icons/pulso"
   });
@@ -2148,7 +2148,7 @@
       const titles = { compativel: "Compatível", parcial: "Parcial", incompativel: "WhatsApp (som) desconectado" };
       el.compatibilidade.dataset.level = level;
       if (window.__PULSO_IOS__ && level === "incompativel") {
-        el.compatibilidade.textContent = "WhatsApp (som) desconectado · Use Pacote (sem login) ou conecte seu número.";
+        el.compatibilidade.textContent = "WhatsApp desconectado · Toque em '📱 Conectar número' para enviar com som.";
       } else {
         el.compatibilidade.textContent = titles[level] + " · " + result.detail;
       }
@@ -2156,7 +2156,7 @@
     } catch (error) {
       el.compatibilidade.dataset.level = "incompativel";
       el.compatibilidade.textContent = window.__PULSO_IOS__
-        ? "WhatsApp (som) desconectado · Use Pacote (sem login) ou conecte seu número."
+        ? "WhatsApp desconectado · Toque em '📱 Conectar número' para enviar com som."
         : "Incompatível · " + friendly(error);
       if (el["conectar-wa"]) el["conectar-wa"].hidden = !window.__PULSO_IOS__;
     } finally {
@@ -2258,6 +2258,9 @@
     if (!result?.ok) {
       if (!result || result.detailCode === "incerto") job.deliveryUncertain = true;
       refreshQueue();
+      if (window.__PULSO_IOS__ && result?.level === "incompativel" && typeof window.__pulsoOpenWhatsAppLogin === "function") {
+        window.__pulsoOpenWhatsAppLogin(true);
+      }
       throw new Error(result?.detail || "O WhatsApp não confirmou o envio.");
     }
     job.sentResult = job.result;

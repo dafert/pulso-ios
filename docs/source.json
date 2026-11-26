@@ -18,6 +18,14 @@
       "category": "utilities",
       "versions": [
         {
+          "version": "0.9.9",
+          "date": "2026-11-26T13:50:00-03:00",
+          "localizedDescription": "100% Figurinhas com Som: tela nativa para conectar pelo número de telefone (sem QR Code) + keepalive em segundo plano no mesmo iPhone.",
+          "downloadURL": "https://github.com/dafert/pulso-ios/releases/download/v0.9.9/Pulso-iOS.ipa",
+          "size": 685000,
+          "minOSVersion": "15.0"
+        },
+        {
           "version": "0.9.8",
           "date": "2026-11-26T13:35:00-03:00",
           "localizedDescription": "Novo envio direto como Pacote pro WhatsApp (igual Sticker.ly, sem login) + login com número de telefone corrigido no app para figurinhas com som.",

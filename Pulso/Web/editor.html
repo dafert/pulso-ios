@@ -31,11 +31,8 @@
       <button type="button" id="automatico" class="auto">✨ Automático</button>
     </section>
     <section id="acoes-fila" class="batch-actions global-batch" hidden aria-label="Envio da fila">
-      <div><strong>Envio em sequência</strong><p class="muted help">Envie a fila como Pacote direto (sem login) ou com som pelo WhatsApp conectado.</p></div>
-      <div class="batch-buttons">
-        <button type="button" id="enviar-fila-pacote" class="pack-btn">📦 Enviar fila como Pacote (sem login)</button>
-        <button type="button" id="enviar-fila" class="primary">🔊 Enviar fila com som</button>
-      </div>
+      <div><strong>Envio em sequência</strong><p class="muted help">As figurinhas com som pendentes serão preparadas e enviadas para a sua conversa no WhatsApp.</p></div>
+      <button type="button" id="enviar-fila" class="primary">🔊 Enviar fila com som</button>
     </section>
     <div class="workspace">
       <section class="card settings" aria-label="Etapas do editor">
@@ -108,9 +105,7 @@
             <select id="destino"><option value="encaminhar">Salvar na minha conversa + Encaminhar</option><option value="salvar">Só salvar na minha conversa</option></select>
           </label>
           <p class="muted help">Você escolhe os destinatários na janela de encaminhamento do WhatsApp.</p>
-          <button type="button" id="enviar-pacote" class="pack-btn block-button">📦 Enviar Pacote pro WhatsApp (sem login)</button>
-          <p class="muted help">Igual ao Sticker.ly — abre direto no WhatsApp sem login (animada ou estática, sem som).</p>
-          <button type="button" id="enviar" class="primary block-button">🔊 Enviar com Som pelo WhatsApp</button>
+          <button type="button" id="enviar" class="primary block-button">🔊 Enviar Figurinha com Som</button>
           <div class="row wrap exports"><button type="button" class="flat" id="baixar-webp">Baixar WebP</button><button type="button" class="flat" id="baixar-ogg">Baixar Ogg</button></div>
         </section>
         <footer class="step-controls"><button type="button" class="flat" id="voltar">Voltar</button><button type="button" id="proximo" class="secondary">Próximo</button></footer>
