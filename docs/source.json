@@ -1,0 +1,40 @@
+{
+  "name": "Pulso iOS",
+  "identifier": "app.pulso.source",
+  "subtitle": "Figurinhas com som para WhatsApp no iPhone",
+  "description": "Fonte oficial para instalar e atualizar o Pulso no SideStore ou AltStore.",
+  "iconURL": "https://dafert.github.io/pulso-ios/icon.png",
+  "website": "https://dafert.github.io/pulso-ios/",
+  "tintColor": "#6137a4",
+  "apps": [
+    {
+      "name": "Pulso",
+      "bundleIdentifier": "app.pulso.ios",
+      "developerName": "Pulso",
+      "subtitle": "Crie figurinhas com som direto no iPhone.",
+      "localizedDescription": "Cria figurinhas animadas WebP com áudio Ogg/Opus sincronizado e envia direto para o WhatsApp Web no modo computador dentro do app.",
+      "iconURL": "https://dafert.github.io/pulso-ios/icon.png",
+      "tintColor": "#6137a4",
+      "category": "utilities",
+      "versions": [
+        {
+          "version": "0.9.7",
+          "date": "2026-11-26T10:17:00-03:00",
+          "localizedDescription": "Primeira versão iOS com áudio Opus nativo, WebP WASM e sincronia exata.",
+          "downloadURL": "https://github.com/dafert/pulso-ios/releases/download/v0.9.7/Pulso-iOS.ipa",
+          "size": 651739,
+          "minOSVersion": "15.0"
+        }
+      ],
+      "appPermissions": {
+        "entitlements": [],
+        "privacy": {
+          "NSPhotoLibraryUsageDescription": "Selecionar vídeos e imagens para criar figurinhas com som.",
+          "NSCameraUsageDescription": "Usar câmera no WhatsApp Web.",
+          "NSMicrophoneUsageDescription": "Usar microfone e áudio no WhatsApp Web."
+        }
+      }
+    }
+  ],
+  "news": []
+}

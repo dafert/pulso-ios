@@ -1,0 +1,139 @@
+<!doctype html>
+<html lang="pt-BR">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+  <title>Pulso para iPhone — Instalar (.ipa)</title>
+  <style>
+    :root {
+      color-scheme: dark;
+      --bg: #14101b;
+      --card: #1f1829;
+      --accent: #7c4dff;
+      --accent2: #ffad81;
+      --ink: #f6edfa;
+      --sub: #bfb0c9;
+      --border: #3a2c4a;
+    }
+    * { box-sizing: border-box; }
+    body {
+      margin: 0;
+      min-height: 100dvh;
+      font-family: -apple-system, BlinkMacSystemFont, "SF Pro Display", "Segoe UI", system-ui, sans-serif;
+      background: radial-gradient(circle at top, #2c1c45 0%, var(--bg) 55%);
+      color: var(--ink);
+      display: grid;
+      place-items: center;
+      padding: 20px 16px 36px;
+    }
+    main {
+      width: 100%;
+      max-width: 440px;
+      background: var(--card);
+      border: 1px solid var(--border);
+      border-radius: 24px;
+      padding: 24px 20px;
+      box-shadow: 0 18px 48px #00000055;
+    }
+    .head {
+      display: flex;
+      align-items: center;
+      gap: 14px;
+      margin-bottom: 18px;
+    }
+    .head img {
+      width: 68px;
+      height: 68px;
+      border-radius: 16px;
+      box-shadow: 0 6px 18px #00000044;
+    }
+    h1 { margin: 0; font-size: 1.55rem; letter-spacing: -.03em; }
+    .ver { color: var(--accent2); font-size: .88rem; font-weight: 600; margin-top: 2px; }
+    p { color: var(--sub); font-size: .92rem; line-height: 1.48; margin: 0 0 16px; }
+    .actions { display: grid; gap: 10px; margin-bottom: 18px; }
+    a.btn, button.btn {
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      gap: 8px;
+      width: 100%;
+      min-height: 50px;
+      padding: 12px 16px;
+      border-radius: 14px;
+      font-weight: 700;
+      font-size: 1rem;
+      text-decoration: none;
+      border: 1px solid transparent;
+      cursor: pointer;
+    }
+    .primary { background: var(--accent); color: #fff; }
+    .hot { background: var(--accent2); color: #24112c; }
+    .ghost { background: #2c213a; color: var(--ink); border-color: var(--border); }
+    .box {
+      background: #171220;
+      border: 1px solid var(--border);
+      border-radius: 14px;
+      padding: 14px;
+      font-size: .85rem;
+      color: var(--sub);
+      line-height: 1.5;
+    }
+    .box strong { color: var(--ink); }
+    ol { margin: 8px 0 0; padding-left: 18px; }
+    li { margin: 4px 0; }
+    code { color: var(--accent2); font-size: .82rem; word-break: break-all; }
+    .ok { color: #97debd; font-size: .84rem; text-align: center; min-height: 1.2em; margin-top: 6px; }
+  </style>
+</head>
+<body>
+  <main>
+    <div class="head">
+      <img src="icon.png" alt="Pulso">
+      <div>
+        <h1>Pulso iOS</h1>
+        <div class="ver">Versão 0.9.7 · iOS 15+ · 636 kB</div>
+      </div>
+    </div>
+    <p>Crie figurinhas animadas com som sincronizado direto no seu iPhone 11 e envie para o WhatsApp.</p>
+
+    <div class="actions">
+      <a class="btn primary" href="https://github.com/dafert/pulso-ios/releases/download/v0.9.7/Pulso-iOS.ipa">
+        ⬇ Baixar Pulso-iOS.ipa
+      </a>
+      <a class="btn hot" href="sidestore://source?url=https://dafert.github.io/pulso-ios/source.json">
+        ⚡ Instalar via SideStore (sem PC)
+      </a>
+      <a class="btn ghost" href="altstore://source?url=https://dafert.github.io/pulso-ios/source.json">
+        📲 Abrir no AltStore
+      </a>
+      <a class="btn ghost" href="apple-magnifier://install?url=https://github.com/dafert/pulso-ios/releases/download/v0.9.7/Pulso-iOS.ipa">
+        🧌 Instalar via TrollStore
+      </a>
+      <button class="btn ghost" type="button" id="copy-source">
+        📋 Copiar link da Fonte (ESign / SideStore / Feather)
+      </button>
+    </div>
+    <div class="ok" id="msg"></div>
+
+    <div class="box">
+      <strong>Como instalar grátis (7 dias, sem licença paga):</strong>
+      <ol>
+        <li><strong>Mais fácil (com PC na 1ª vez):</strong> baixe o <strong>Sideloadly</strong> no PC, conecte o iPhone 11 no cabo, arraste o <code>Pulso-iOS.ipa</code>, coloque seu Apple ID gratuito e clique em <strong>Start</strong>.</li>
+        <li><strong>Para renovar no próprio iPhone sem PC:</strong> use o <strong>SideStore</strong> e toque em <strong>Instalar via SideStore</strong> acima.</li>
+        <li>No iPhone: <strong>Ajustes → Geral → Gestão de VPN e Dispositivo</strong> → <strong>Confiar</strong> no seu Apple ID (e ative o <strong>Modo de Desenvolvedor</strong> em Privacidade e Segurança se estiver no iOS 16+).</li>
+      </ol>
+    </div>
+  </main>
+  <script>
+    document.getElementById("copy-source").addEventListener("click", async () => {
+      const url = "https://dafert.github.io/pulso-ios/source.json";
+      try {
+        await navigator.clipboard.writeText(url);
+        document.getElementById("msg").textContent = "Link da fonte copiado!";
+      } catch {
+        prompt("Copie o link da fonte:", url);
+      }
+    });
+  </script>
+</body>
+</html>
