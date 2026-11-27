@@ -187,7 +187,7 @@ try {
     Write-Host " O GitHub Actions esta compilando e assinando seu app." -ForegroundColor White
     Write-Host " Acompanhe em: https://github.com/dafert/pulso-ios/actions" -ForegroundColor Cyan
     Write-Host " Em ~1 minuto, instale no Safari do iPhone em:" -ForegroundColor White
-    Write-Host " https://dafert.github.io/pulso-ios/" -ForegroundColor Yellow
+    Write-Host " https://pulso-extrefad.pages.dev/" -ForegroundColor Yellow
     Write-Host "==========================================================" -ForegroundColor Green
     exit 0
 } catch {

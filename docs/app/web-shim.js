@@ -21,7 +21,7 @@
 
   function isStaticHost(host) {
     var h = String(host || "").toLowerCase();
-    return h.endsWith(".github.io") || h.endsWith(".pages.dev");
+    return h.endsWith(".pages.dev");
   }
 
   function detectInitialServerUrl() {

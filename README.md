@@ -4,7 +4,6 @@ Editor e cliente para criar e enviar figurinhas animadas com som sincronizado (W
 
 - **Site:** https://pulso-extrefad.pages.dev
 - **App Web:** https://pulso-extrefad.pages.dev/app/
-- **Espelho:** https://dafert.github.io/pulso-ios/
 - **Downloads:** [Releases](https://github.com/dafert/pulso-ios/releases/latest) (`Pulso-Android.apk` e `Pulso-iOS.ipa`)
 
 ## Como usar

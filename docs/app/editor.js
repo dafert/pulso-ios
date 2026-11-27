@@ -2327,7 +2327,7 @@
         status(resp.detail || "Figurinha enviada para a conversa 'Você' no WhatsApp.");
         return;
       }
-      // No GitHub Pages / Cloudflare Pages: baixa (ou compartilha) WebP + áudio diretamente
+      // Em hospedagem estática: baixa (ou compartilha) WebP + áudio diretamente
       const baseName = job.file.name.replace(/\.[^.]+$/, "");
       const shareList = [new File([job.result.bytes], baseName + ".webp", { type: "image/webp" })];
       if (job.audio) {
