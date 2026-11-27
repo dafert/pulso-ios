@@ -531,50 +531,5 @@
         })
         .catch(function () {});
     }
-
-    var installButton = document.getElementById("install-app");
-    var installStatus = document.getElementById("install-status");
-    if (installButton) {
-      var supportsWebInstall = typeof Navigator !== "undefined" && typeof Navigator.prototype.install === "function";
-      var deferredInstallPrompt;
-      if (supportsWebInstall) installButton.hidden = false;
-
-      window.addEventListener("beforeinstallprompt", function (event) {
-        event.preventDefault();
-        deferredInstallPrompt = event;
-        if (!supportsWebInstall) installButton.hidden = false;
-      });
-
-      installButton.addEventListener("click", async function () {
-        if (installButton.getAttribute("aria-disabled") === "true") return;
-        installButton.setAttribute("aria-disabled", "true");
-        try {
-          if (supportsWebInstall) {
-            await navigator.install();
-            if (installStatus) installStatus.textContent = "Pulso instalado.";
-            installButton.hidden = true;
-          } else if (deferredInstallPrompt) {
-            var promptEvent = deferredInstallPrompt;
-            deferredInstallPrompt = undefined;
-            await promptEvent.prompt();
-            var choice = await promptEvent.userChoice;
-            if (installStatus) {
-              installStatus.textContent = choice.outcome === "accepted"
-                ? "Pulso instalado na tela inicial."
-                : "Instalação cancelada.";
-            }
-            if (!deferredInstallPrompt) installButton.hidden = true;
-          }
-        } catch (error) {
-          if (installStatus) {
-            installStatus.textContent = error && error.name === "AbortError"
-              ? "Instalação cancelada."
-              : "Não foi possível iniciar a instalação automática.";
-          }
-        } finally {
-          installButton.removeAttribute("aria-disabled");
-        }
-      });
-    }
   });
 })();
