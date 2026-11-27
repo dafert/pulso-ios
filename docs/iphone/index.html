@@ -1,0 +1,434 @@
+<!doctype html>
+<html lang="pt-BR">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+  <meta name="color-scheme" content="light dark">
+  <meta name="theme-color" content="#14101b">
+  <meta name="apple-mobile-web-app-capable" content="yes">
+  <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+  <meta name="apple-mobile-web-app-title" content="Pulso">
+  <title>Pulso no iPhone — Sem instalar app</title>
+  <meta name="description" content="Crie e envie figurinhas animadas com som para o WhatsApp direto pelo Safari do iPhone, sem instalar .ipa nem usar computador.">
+  <meta property="og:type" content="website">
+  <meta property="og:url" content="https://pulso-extrefad.pages.dev/iphone/">
+  <meta property="og:title" content="Pulso no iPhone — Figurinhas com som pelo Safari">
+  <meta property="og:description" content="Use direto no Safari do iPhone sem precisar baixar .ipa ou usar PC.">
+  <meta property="og:image" content="https://pulso-extrefad.pages.dev/icon.png">
+  <link rel="canonical" href="https://pulso-extrefad.pages.dev/iphone/">
+  <link rel="icon" type="image/png" href="../icon.png">
+  <link rel="apple-touch-icon" href="../app/icons/icon-192.png">
+  <link rel="manifest" href="../app/manifest.webmanifest">
+  <style>
+    :root {
+      color-scheme: light dark;
+      --bg-l: #f6f3fa; --bg-d: #120e1a;
+      --card-l: #ffffff; --card-d: #1c1528;
+      --field-l: #f0eaf7; --field-d: #261d36;
+      --ink-l: #1d152b; --ink-d: #f6effc;
+      --sub-l: #5e536e; --sub-d: #bfb1cf;
+      --rule-l: #dfd6ea; --rule-d: #382a4c;
+      --accent-l: #6a38d4; --accent-d: #9c72ff;
+      --good-l: #177a4d; --good-d: #3ad189;
+      --danger-l: #b91c48; --danger-d: #ff9cc0;
+
+      --bg: var(--bg-l); --card: var(--card-l); --field: var(--field-l);
+      --ink: var(--ink-l); --sub: var(--sub-l); --rule: var(--rule-l);
+      --accent: var(--accent-l); --good: var(--good-l); --danger: var(--danger-l);
+      font-family: -apple-system, BlinkMacSystemFont, "SF Pro Display", Inter, "Segoe UI", system-ui, sans-serif;
+    }
+    @media (prefers-color-scheme: dark) {
+      :root {
+        --bg: var(--bg-d); --card: var(--card-d); --field: var(--field-d);
+        --ink: var(--ink-d); --sub: var(--sub-d); --rule: var(--rule-d);
+        --accent: var(--accent-d); --good: var(--good-d); --danger: var(--danger-d);
+      }
+    }
+    @supports (color: light-dark(white, black)) {
+      :root {
+        --bg: light-dark(var(--bg-l), var(--bg-d));
+        --card: light-dark(var(--card-l), var(--card-d));
+        --field: light-dark(var(--field-l), var(--field-d));
+        --ink: light-dark(var(--ink-l), var(--ink-d));
+        --sub: light-dark(var(--sub-l), var(--sub-d));
+        --rule: light-dark(var(--rule-l), var(--rule-d));
+        --accent: light-dark(var(--accent-l), var(--accent-d));
+        --good: light-dark(var(--good-l), var(--good-d));
+        --danger: light-dark(var(--danger-l), var(--danger-d));
+      }
+    }
+
+    * { box-sizing: border-box; }
+    html { scroll-behavior: smooth; -webkit-text-size-adjust: 100%; }
+    body {
+      margin: 0; min-height: 100dvh;
+      background: radial-gradient(circle at top center, color-mix(in srgb, var(--accent) 18%, transparent) 0%, var(--bg) 52%);
+      color: var(--ink); line-height: 1.5;
+      padding-bottom: calc(28px + env(safe-area-inset-bottom, 0px));
+    }
+    a { color: var(--accent); }
+    .wrap { max-width: 680px; margin: 0 auto; padding: 16px 14px 40px; }
+
+    .topbar {
+      display: flex; align-items: center; justify-content: space-between;
+      gap: 10px; flex-wrap: wrap; margin-bottom: 18px;
+    }
+    .brand { display: flex; align-items: center; gap: 9px; text-decoration: none; color: var(--ink); font-weight: 800; font-size: 1.05rem; }
+    .brand img { width: 34px; height: 34px; border-radius: 10px; aspect-ratio: 1; }
+    .navlinks { display: flex; gap: 8px; flex-wrap: wrap; }
+    .navlinks a {
+      text-decoration: none; color: var(--sub); font-size: .85rem; font-weight: 650;
+      padding: 7px 11px; border-radius: 999px; border: 1px solid var(--rule); background: var(--card);
+    }
+    .navlinks a.active { color: var(--ink); border-color: var(--accent); }
+
+    .hero {
+      background: var(--card); border: 1px solid var(--rule); border-radius: 22px;
+      padding: 22px 18px; margin-bottom: 14px;
+    }
+    .pill {
+      display: inline-block; padding: 4px 11px; border-radius: 999px; font-size: .76rem; font-weight: 750;
+      background: color-mix(in srgb, var(--accent) 16%, transparent); color: var(--accent);
+      margin-bottom: 10px;
+    }
+    h1 {
+      margin: 0 0 8px; font-size: clamp(1.65rem, 1.1rem + 2.2vw, 2.3rem);
+      line-height: 1.1; letter-spacing: -.035em;
+    }
+    h1 em { font-style: italic; font-family: Georgia, serif; color: var(--accent); font-weight: 600; }
+    .lead { margin: 0 0 16px; color: var(--sub); font-size: .95rem; }
+
+    .card {
+      background: var(--card); border: 1px solid var(--rule); border-radius: 20px;
+      padding: 18px; margin-bottom: 14px;
+    }
+    .card-head { display: flex; align-items: center; justify-content: space-between; gap: 8px; flex-wrap: wrap; margin-bottom: 8px; }
+    .step-num {
+      font-size: .74rem; font-weight: 800; letter-spacing: .04em; text-transform: uppercase;
+      color: var(--accent); display: block; margin-bottom: 2px;
+    }
+    h2 { margin: 0; font-size: 1.15rem; letter-spacing: -.025em; }
+    .badge {
+      font-size: .76rem; font-weight: 750; padding: 4px 10px; border-radius: 999px;
+      background: var(--field); color: var(--sub);
+    }
+    .badge[data-state="connected"] { background: #194d36; color: #9cf2c8; }
+    .badge[data-state="pending"] { background: #4a3714; color: #ffd98a; }
+    .muted { color: var(--sub); font-size: .88rem; margin: 0 0 12px; }
+
+    .phone-row { display: grid; grid-template-columns: 74px minmax(0, 1fr); gap: 8px; margin-bottom: 8px; }
+    input {
+      width: 100%; min-height: 48px; padding: 10px 12px; border-radius: 12px;
+      border: 1px solid var(--rule); background: var(--field); color: var(--ink);
+      font-size: 16px; font-family: inherit;
+    }
+    .ddi { text-align: center; font-weight: 700; }
+    form input:user-invalid { border-color: var(--danger); }
+    form input:user-valid { border-color: var(--good); }
+    .err-msg { display: none; color: var(--danger); font-size: .82rem; font-weight: 600; margin: 0 0 10px; }
+    form:has(input:user-invalid) .err-msg { display: block; }
+
+    .btn {
+      display: inline-flex; align-items: center; justify-content: center; gap: 8px;
+      width: 100%; min-height: 48px; padding: 12px 16px; border-radius: 14px;
+      border: 1px solid transparent; font-size: .95rem; font-weight: 750;
+      text-decoration: none; cursor: pointer; font-family: inherit;
+    }
+    .btn:active { transform: scale(.99); }
+    .btn[aria-disabled="true"] { opacity: .6; pointer-events: none; }
+    .btn-primary { background: linear-gradient(135deg, var(--accent), #5229b8); color: #fff; }
+    .btn-green { background: #1e9e63; color: #fff; }
+    .btn-secondary { background: var(--field); color: var(--ink); border-color: var(--rule); }
+    .btn-row { display: grid; gap: 8px; margin-top: 8px; }
+    .btn-inline { display: grid; grid-template-columns: 1fr 1fr; gap: 8px; margin-top: 8px; }
+
+    .code-box {
+      margin-top: 12px; padding: 16px; border-radius: 16px;
+      background: #103324; border: 1.5px solid #2cc77c; color: #f4fff9; text-align: center;
+    }
+    .code-label { font-size: .72rem; font-weight: 800; letter-spacing: .08em; color: #8ef0be; }
+    .code-value {
+      font-family: ui-monospace, SFMono-Regular, Menlo, monospace;
+      font-size: clamp(1.65rem, 1.2rem + 2vw, 2.2rem); font-weight: 800;
+      letter-spacing: .12em; margin: 6px 0 12px; color: #fff;
+    }
+    .code-steps { margin: 12px 0 0; font-size: .82rem; color: #d6f5e6; text-align: left; padding-left: 18px; }
+    .code-steps li { margin: 4px 0; }
+
+    .qr-box { margin-top: 12px; text-align: center; }
+    .qr-box img { background: #fff; padding: 10px; border-radius: 14px; width: 220px; height: 220px; aspect-ratio: 1; object-fit: contain; }
+
+    .ios-steps { margin: 8px 0 0; padding-left: 20px; color: var(--sub); font-size: .9rem; }
+    .ios-steps li { margin: 7px 0; }
+    .ios-steps strong { color: var(--ink); }
+
+    .status-line { font-size: .85rem; color: var(--sub); margin: 10px 0 0; min-height: 1.3em; }
+    footer { text-align: center; color: var(--sub); font-size: .82rem; padding-top: 10px; }
+
+    @media (max-width: 440px) {
+      .btn-inline { grid-template-columns: 1fr; }
+    }
+  </style>
+</head>
+<body>
+  <div class="wrap">
+    <header class="topbar">
+      <a class="brand" href="../">
+        <img src="../icon.png" alt="Pulso" width="34" height="34">
+        <span>Pulso</span>
+      </a>
+      <nav class="navlinks" aria-label="Navegação">
+        <a href="../">Início</a>
+        <a href="./" class="active">iPhone (sem app)</a>
+        <a href="../app/">Editor Web</a>
+      </nav>
+    </header>
+
+    <section class="hero">
+      <span class="pill">iPhone · Direto no Safari</span>
+      <h1>Figurinhas <em>com som</em> no iPhone, sem instalar nada.</h1>
+      <p class="lead">Não precisa baixar arquivo <code>.ipa</code> nem usar computador. Conecte seu WhatsApp aqui pelo número, escolha um vídeo da galeria e envie com áudio sincronizado.</p>
+      <a class="btn btn-primary" href="../app/">Ir direto para o Editor de Figurinhas</a>
+    </section>
+
+    <section class="card" aria-labelledby="step1-title">
+      <div class="card-head">
+        <div>
+          <span class="step-num">Passo 1</span>
+          <h2 id="step1-title">Conectar seu WhatsApp pelo número</h2>
+        </div>
+        <span class="badge" id="ios-badge" data-state="idle">Desconectado</span>
+      </div>
+      <p class="muted" id="ios-msg" role="status">Digite seu DDD e número para gerar o código de 8 dígitos e vincular no mesmo iPhone.</p>
+
+      <div id="ios-connected-actions" hidden>
+        <div class="btn-row">
+          <a class="btn btn-green" href="../app/">Abrir Editor e enviar figurinhas com som</a>
+          <button type="button" class="btn btn-secondary" id="ios-logout-btn">Desconectar WhatsApp</button>
+        </div>
+      </div>
+
+      <div id="ios-login-area">
+        <form id="ios-phone-form" novalidate>
+          <div class="phone-row">
+            <input type="text" id="ios-ddi" class="ddi" value="+55" required pattern="\+?[0-9]{1,4}" autocomplete="tel-country-code" aria-label="DDI do país">
+            <input type="tel" id="ios-phone" inputmode="numeric" placeholder="DDD + Número (ex: 11999999999)" required pattern="[0-9\s()-]{8,16}" autocomplete="tel-national" aria-label="DDD e número de telefone">
+          </div>
+          <p class="err-msg">Informe seu DDD e número com pelo menos 8 dígitos (ex: 11999999999).</p>
+          <div class="btn-row">
+            <button type="submit" id="ios-pair-btn" class="btn btn-primary">Gerar código de 8 dígitos</button>
+            <button type="button" id="ios-qr-btn" class="btn btn-secondary">Prefere conectar por QR Code?</button>
+          </div>
+        </form>
+
+        <div id="ios-code-box" class="code-box" hidden>
+          <div class="code-label">SEU CÓDIGO DE CONEXÃO</div>
+          <div id="ios-code-value" class="code-value">---- ----</div>
+          <button type="button" id="ios-copy-open" class="btn btn-green">Copiar código e abrir WhatsApp</button>
+          <ol class="code-steps">
+            <li>Toque no botão verde acima para copiar e abrir o WhatsApp.</li>
+            <li>No WhatsApp, toque em <strong>Ajustes → Dispositivos conectados → Conectar dispositivo</strong>.</li>
+            <li>Toque em <strong>Conectar com número de telefone</strong>, cole o código e volte para o Safari.</li>
+          </ol>
+        </div>
+
+        <div id="ios-qr-box" class="qr-box" hidden>
+          <img id="ios-qr-img" alt="QR Code do WhatsApp Web" width="220" height="220">
+          <p class="muted" style="margin-top:8px;">Abra o WhatsApp em outro celular e escaneie em <strong>Dispositivos conectados</strong>.</p>
+        </div>
+      </div>
+    </section>
+
+    <section class="card" aria-labelledby="step2-title">
+      <span class="step-num">Passo 2</span>
+      <h2 id="step2-title">Escolher vídeo da galeria e enviar</h2>
+      <p class="muted" style="margin-top:6px;">Depois de conectar, abra o Editor, escolha qualquer vídeo ou GIF da sua Fototeca e toque em <strong>Criar automático</strong>. O vídeo em 512 × 512 e o áudio Opus são gerados no próprio Safari do iPhone.</p>
+      <a class="btn btn-primary" href="../app/">Abrir Editor de Figurinhas</a>
+    </section>
+
+    <section class="card" aria-labelledby="step3-title">
+      <span class="step-num">Dica opcional</span>
+      <h2 id="step3-title">Deixar o Pulso como ícone na Tela de Início</h2>
+      <p class="muted" style="margin-top:6px;">Você pode fixar o Pulso na tela do iPhone para abrir em tela cheia como um app comum, sem precisar instalar <code>.ipa</code>:</p>
+      <ol class="ios-steps">
+        <li>Abra esta página no navegador <strong>Safari</strong> do iPhone.</li>
+        <li>Toque no botão <strong>Compartilhar</strong> (ícone de quadrado com seta para cima na barra inferior).</li>
+        <li>Role as opções e toque em <strong>Adicionar à Tela de Início</strong> e depois em <strong>Adicionar</strong>.</li>
+      </ol>
+    </section>
+
+    <footer>
+      Prefere instalar o app nativo? <a href="https://github.com/dafert/pulso-ios/releases/download/v1.0.0/Pulso-iOS.ipa">Baixar Pulso-iOS.ipa</a> · <a href="../#tutorial">Ver tutorial do .ipa</a>
+    </footer>
+  </div>
+
+  <script>
+    (function () {
+      var API = "https://pulso-api.daviddaguerdegodoy.workers.dev";
+      var SID_KEY = "pulso_cf_session_id";
+      var pollTimer = null;
+
+      function getSid() {
+        try { return localStorage.getItem(SID_KEY) || ""; } catch (e) { return ""; }
+      }
+      function setSid(id) {
+        var clean = String(id || "").trim();
+        try {
+          if (clean) localStorage.setItem(SID_KEY, clean);
+          else localStorage.removeItem(SID_KEY);
+        } catch (e) {}
+      }
+
+      async function api(path, method, body) {
+        var sid = getSid();
+        var headers = { "Content-Type": "application/json" };
+        if (sid) headers["X-Pulso-Session"] = sid;
+        var opts = { method: method || "GET", headers: headers };
+        if (body !== undefined) opts.body = JSON.stringify(Object.assign(sid ? { sessionId: sid } : {}, body));
+        var url = API + path;
+        if ((method || "GET") === "GET" && sid) url += "?sessionId=" + encodeURIComponent(sid);
+        var res = await fetch(url, opts);
+        var data = await res.json().catch(function () { return { ok: false, detail: "Resposta inválida." }; });
+        if (data && data.sessionId) setSid(data.sessionId);
+        if (!res.ok && data.ok !== false) data.ok = false;
+        return data;
+      }
+
+      var badge = document.getElementById("ios-badge");
+      var msg = document.getElementById("ios-msg");
+      var loginArea = document.getElementById("ios-login-area");
+      var connectedActions = document.getElementById("ios-connected-actions");
+      var form = document.getElementById("ios-phone-form");
+      var ddiEl = document.getElementById("ios-ddi");
+      var phoneEl = document.getElementById("ios-phone");
+      var pairBtn = document.getElementById("ios-pair-btn");
+      var qrBtn = document.getElementById("ios-qr-btn");
+      var codeBox = document.getElementById("ios-code-box");
+      var codeVal = document.getElementById("ios-code-value");
+      var copyOpenBtn = document.getElementById("ios-copy-open");
+      var qrBox = document.getElementById("ios-qr-box");
+      var qrImg = document.getElementById("ios-qr-img");
+      var logoutBtn = document.getElementById("ios-logout-btn");
+
+      try {
+        var saved = localStorage.getItem("pulso_web_last_phone");
+        if (saved && phoneEl) phoneEl.value = saved;
+      } catch (e) {}
+
+      function stopPoll() {
+        if (pollTimer) { clearInterval(pollTimer); pollTimer = null; }
+      }
+
+      function renderState(st) {
+        if (st && st.loggedIn) {
+          badge.textContent = st.compatible ? "WhatsApp conectado" : "Finalizando conexão…";
+          badge.dataset.state = st.compatible ? "connected" : "pending";
+          msg.textContent = st.compatible
+            ? "WhatsApp conectado. Toque abaixo para abrir o Editor e enviar suas figurinhas com som."
+            : "Conectado! Aguarde alguns segundos enquanto o WhatsApp carrega…";
+          loginArea.hidden = true;
+          connectedActions.hidden = false;
+          if (st.compatible) stopPoll();
+          return;
+        }
+        loginArea.hidden = false;
+        connectedActions.hidden = true;
+        if (st && st.pairingCode) {
+          badge.textContent = "Aguardando código";
+          badge.dataset.state = "pending";
+          codeVal.textContent = st.pairingCode;
+          codeBox.hidden = false;
+          qrBox.hidden = true;
+          msg.textContent = "Código pronto. Copie e cole no WhatsApp do seu iPhone.";
+        } else {
+          badge.textContent = "Desconectado";
+          badge.dataset.state = "idle";
+          if (st && st.detail) msg.textContent = st.detail;
+        }
+      }
+
+      function startPoll() {
+        stopPoll();
+        pollTimer = setInterval(async function () {
+          if (!getSid()) { stopPoll(); return; }
+          try {
+            var st = await api("/api/session/status", "GET");
+            if (st && st.state === "idle") { setSid(""); stopPoll(); }
+            renderState(st);
+          } catch (e) {}
+        }, 3500);
+      }
+
+      form.addEventListener("submit", async function (e) {
+        e.preventDefault();
+        if (!form.checkValidity()) { form.reportValidity(); return; }
+        var ddi = (ddiEl.value || "55").replace(/\D/g, "") || "55";
+        var phone = (phoneEl.value || "").replace(/\D/g, "");
+        try { localStorage.setItem("pulso_web_last_phone", phone); } catch (err) {}
+        pairBtn.setAttribute("aria-disabled", "true");
+        qrBox.hidden = true;
+        msg.textContent = "Gerando código de 8 dígitos…";
+        try {
+          var res = await api("/api/session/pair-phone", "POST", { ddi: ddi, phone: phone });
+          if (res.ok && res.loggedIn) renderState(res);
+          else if (res.ok && res.code) { renderState({ loggedIn: false, pairingCode: res.code }); startPoll(); }
+          else msg.textContent = res.detail || "Não foi possível gerar o código.";
+        } catch (err) {
+          msg.textContent = "Erro ao conectar. Tente novamente.";
+        } finally {
+          pairBtn.removeAttribute("aria-disabled");
+        }
+      });
+
+      qrBtn.addEventListener("click", async function () {
+        qrBtn.setAttribute("aria-disabled", "true");
+        codeBox.hidden = true;
+        msg.textContent = "Carregando QR Code…";
+        try {
+          var res = await api("/api/session/qr", "POST", {});
+          if (res.ok && res.loggedIn) renderState(res);
+          else if (res.ok && res.qrDataUrl) {
+            qrImg.src = res.qrDataUrl;
+            qrBox.hidden = false;
+            msg.textContent = "Escaneie o QR Code no WhatsApp.";
+            startPoll();
+          } else msg.textContent = res.detail || "Não foi possível carregar o QR Code.";
+        } catch (err) {
+          msg.textContent = "Erro ao carregar QR Code.";
+        } finally {
+          qrBtn.removeAttribute("aria-disabled");
+        }
+      });
+
+      copyOpenBtn.addEventListener("click", async function () {
+        var raw = (codeVal.textContent || "").replace(/[^A-Za-z0-9]/g, "");
+        if (!raw) return;
+        try { await navigator.clipboard.writeText(raw); } catch (e) {}
+        msg.textContent = "Código " + raw + " copiado! Abrindo WhatsApp…";
+        location.href = "whatsapp://";
+      });
+
+      logoutBtn.addEventListener("click", async function () {
+        stopPoll();
+        try { await api("/api/session/logout", "POST", {}); } catch (e) {}
+        setSid("");
+        codeBox.hidden = true;
+        qrBox.hidden = true;
+        renderState({ loggedIn: false, detail: "WhatsApp desconectado." });
+      });
+
+      if (getSid()) {
+        api("/api/session/status", "GET").then(function (st) {
+          if (st && st.state === "idle") setSid("");
+          renderState(st);
+        }).catch(function () {});
+      }
+      document.addEventListener("visibilitychange", function () {
+        if (document.visibilityState === "visible" && getSid()) {
+          api("/api/session/status", "GET").then(renderState).catch(function () {});
+        }
+      });
+    })();
+  </script>
+</body>
+</html>

@@ -541,7 +541,21 @@
     const pcm = processPcm(channels, options, attenuation);
     const duration = pcm.channels[0].length / AUDIO_RATE;
     const target = 95e4;
-    if (typeof window.__pulsoEncodeOpusNative === "function" && (typeof AudioEncoder !== "function" || window.__PULSO_IOS__)) {
+    let webCodecsOpus = false;
+    if (typeof AudioEncoder === "function" && !window.__PULSO_IOS__) {
+      try {
+        const chk = await AudioEncoder.isConfigSupported({
+          codec: "opus",
+          sampleRate: AUDIO_RATE,
+          numberOfChannels: 1,
+          bitrate: 32e3
+        });
+        webCodecsOpus = Boolean(chk && chk.supported);
+      } catch {
+        webCodecsOpus = false;
+      }
+    }
+    if (typeof window.__pulsoEncodeOpusNative === "function" && !webCodecsOpus) {
       const mono = pcm.channels.length === 1 ? pcm.channels[0] : Float32Array.from(pcm.channels[0], (s, i) => (s + pcm.channels[1][i]) / 2);
       const bitrate = Math.min(48e3, Math.max(16e3, Math.floor(target * 7.5 / Math.max(0.1, duration))));
       const bytes = await window.__pulsoEncodeOpusNative(mono, bitrate);

@@ -194,7 +194,15 @@
     }
   };
 
-  // Fallback PCM 16-bit WAV para navegadores sem AudioEncoder Opus
+  // Encoder Ogg/Opus em WebAssembly (carregado sob demanda no Safari / iPhone)
+  var opusWasmPromise = null;
+  window.__pulsoEncodeOpusNative = async function (monoFloat32, bitrate) {
+    if (!opusWasmPromise) opusWasmPromise = import("./opus-wasm.js");
+    var mod = await opusWasmPromise;
+    return await mod.encodeOggOpus(monoFloat32, bitrate);
+  };
+
+  // Fallback PCM 16-bit WAV caso o encoder WASM falhe
   window.__pulsoEncodeAudioFallback = function (channels, sampleRate) {
     var rate = sampleRate || 48000;
     var left = channels[0];

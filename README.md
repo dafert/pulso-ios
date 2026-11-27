@@ -3,6 +3,7 @@
 Editor e cliente para criar e enviar figurinhas animadas com som sincronizado (WebP + Ogg/Opus) no WhatsApp.
 
 - **Site:** https://pulso-extrefad.pages.dev
+- **iPhone (sem instalar app):** https://pulso-extrefad.pages.dev/iphone/
 - **App Web:** https://pulso-extrefad.pages.dev/app/
 - **Downloads:** [Releases](https://github.com/dafert/pulso-ios/releases/latest) (`Pulso-Android.apk` e `Pulso-iOS.ipa`)
 
