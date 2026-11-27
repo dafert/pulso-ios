@@ -3,7 +3,7 @@
   // src/brand.js
   var BRAND = Object.freeze({
     name: "Pulso",
-    version: "0.9.9",
+    version: "1.0.0",
     description: "Crie figurinhas com som no seu navegador.",
     icon: "icons/pulso"
   });
@@ -543,7 +543,7 @@
     const target = 95e4;
     if (typeof window.__pulsoEncodeOpusNative === "function" && (typeof AudioEncoder !== "function" || window.__PULSO_IOS__)) {
       const mono = pcm.channels.length === 1 ? pcm.channels[0] : Float32Array.from(pcm.channels[0], (s, i) => (s + pcm.channels[1][i]) / 2);
-      const bitrate = Math.min(48e3, Math.max(16e3, Math.floor(target * 7.5 / Math.max(0.1, duration))));
+      const bitrate = Math.min(64e3, Math.max(24e3, Math.floor(target * 7.5 / Math.max(0.1, duration))));
       const bytes = await window.__pulsoEncodeOpusNative(mono, bitrate);
       if (bytes.length > 1e6) throw new Error("O áudio excedeu 1 MB. Reduza o trecho.");
       return {
@@ -710,15 +710,17 @@
       const startOffset = Number.isFinite(video.currentTime) ? video.currentTime : 0;
       const duration = Math.max(0.01, video.duration - startOffset);
       const length = Math.max(0.01, Math.min(range.end, duration) - range.start);
-      const defaultFps = length > 8 ? 10 : 12;
-      const targetFps = analysis ? Math.min(2, 4 / length) : Math.min(20, requestedFps || defaultFps);
+      const defaultFps = length <= 4 ? 20 : length <= 7 ? 16 : 12;
+      const targetFps = analysis ? Math.min(2, 4 / length) : Math.min(24, requestedFps || defaultFps);
       const fps = Math.min(targetFps, MAX_FRAMES / length);
       const count = Math.max(1, Math.round(length * fps));
-      const maxDim = analysis ? 192 : 512;
+      const maxDim = analysis ? 192 : 640;
       const scale = Math.min(1, maxDim / Math.max(width, height), Math.sqrt(FRAME_BUDGET / (4 * width * height * count)));
       const targetW = Math.max(1, Math.floor(width * scale));
       const targetH = Math.max(1, Math.floor(height * scale));
       const surface2 = makeCanvas(targetW, targetH);
+      surface2.context.imageSmoothingEnabled = true;
+      surface2.context.imageSmoothingQuality = "high";
       const maxT = Math.max(0, video.duration - 1e-3);
       for (let i = 0; i < count; i++) {
         signal.throwIfAborted();
@@ -952,9 +954,14 @@
     }
     const ladder = [
       [512, maxFps],
+      [512, 18],
       [512, 15],
+      [512, 12],
+      [448, 15],
+      [448, 12],
       [384, 15],
       [384, 12],
+      [384, 10],
       [320, 12],
       [320, 10],
       [256, 10],
@@ -985,6 +992,8 @@
       let out = surfaces.get(side);
       if (!out) {
         out = makeCanvas(side, side, false);
+        out.context.imageSmoothingEnabled = true;
+        out.context.imageSmoothingQuality = "high";
         surfaces.set(side, out);
       }
       const { source: s, target: t } = geometry(image.width, image.height, borders, crop, side);
@@ -1135,7 +1144,7 @@
     const render = rendererLocal(borders, options);
     const frames = signaturesLocal(source.frames);
     const available = source.length ? (frames.length - 1) / source.length : 1;
-    const qBySide = { 512: 75, 448: 72, 384: 68, 320: 64, 256: 60, 192: 55, 160: 52, 128: 48, 96: 45, 64: 40 };
+    const qBySide = { 512: 84, 448: 80, 384: 76, 320: 72, 256: 68, 192: 64, 160: 60, 128: 56, 96: 52, 64: 48 };
     const comboList = [...combinationsLocal(options.preset, available, options.fps, still, force512)];
     const canCanvasWebp = await supportsCanvasWebp();
     const wasm = canCanvasWebp ? null : await getWebpWasm();
@@ -1220,12 +1229,12 @@
     }
 
     progress2("Escolhendo resolução e qualidade…", 0.36);
-    const safeLimit = limit * 0.94;
+    const safeLimit = limit * 0.96;
     let chosen = null;
     for (const { side, fps } of comboList) {
       signal.throwIfAborted();
       const plan = scheduleLocal(frames, fps, source.length);
-      const qHi = light ? Math.min(68, qBySide[side] || 55) : maximum2 ? Math.min(88, (qBySide[side] || 60) + 12) : (qBySide[side] || 60);
+      const qHi = light ? Math.min(72, qBySide[side] || 60) : maximum2 ? Math.min(92, (qBySide[side] || 70) + 8) : (qBySide[side] || 72);
       const qLo = force512 ? 10 : (side <= 128 ? 14 : 20);
       const avgHi = await avgFrameBytes(side, qHi);
       const estHi = (avgHi + 32) * plan.length + exif.length + 128;
@@ -1362,7 +1371,7 @@
           finish(fallbackError);
         }
       }
-      if (workerDisabled || typeof Worker !== "function") {
+      if (workerDisabled || window.__PULSO_ANDROID__ || window.__PULSO_WEB__ || typeof Worker !== "function") {
         void recoverLocally(Object.assign(new Error("Worker indisponível."), { name: "WorkerCrashedError" }));
         return;
       }
@@ -1490,7 +1499,7 @@
     };
     for (let attempt = 0; attempt < 4; attempt++) {
       let result;
-      if (lowResourceAudio) {
+      if (lowResourceAudio || window.__PULSO_ANDROID__ || window.__PULSO_WEB__) {
         result = await encodeLocally();
       } else {
         const data = { what: "audio", pcm: samplesOf(buffer, range), audioOptions, attenuation, lowResourceAudio };
@@ -1519,9 +1528,9 @@
   var by = (id) => document.getElementById(id);
   var el = Object.fromEntries([...document.querySelectorAll("[id]")].map((node) => [node.id, node]));
   var storageKey = "pulso-preferencias";
-  var embedded = Boolean(window.__PULSO_IOS__) || (window.parent !== window && location.ancestorOrigins?.length === 1 && location.ancestorOrigins[0] === WA_ORIGIN);
+  var embedded = Boolean(window.__PULSO_IOS__) || Boolean(window.__PULSO_ANDROID__) || Boolean(window.__PULSO_WEB__) || (window.parent !== window && location.ancestorOrigins?.length === 1 && location.ancestorOrigins[0] === WA_ORIGIN);
   var tellPanel = (what, reason) => {
-    if (window.__PULSO_IOS__) {
+    if (window.__PULSO_IOS__ || window.__PULSO_ANDROID__) {
       if (what === "close" && typeof window.__pulsoClosePanel === "function") window.__pulsoClosePanel();
       return;
     }
@@ -2147,18 +2156,20 @@
       const level = result.level || "incompativel";
       const titles = { compativel: "Compatível", parcial: "Parcial", incompativel: "WhatsApp (som) desconectado" };
       el.compatibilidade.dataset.level = level;
-      if (window.__PULSO_IOS__ && level === "incompativel") {
+      const isNativeMobile = Boolean(window.__PULSO_IOS__ || window.__PULSO_ANDROID__);
+      if (isNativeMobile && level === "incompativel") {
         el.compatibilidade.textContent = "WhatsApp desconectado · Toque em '📱 Conectar número' para enviar com som.";
       } else {
         el.compatibilidade.textContent = titles[level] + " · " + result.detail;
       }
-      if (el["conectar-wa"]) el["conectar-wa"].hidden = !(window.__PULSO_IOS__ && level === "incompativel");
+      if (el["conectar-wa"]) el["conectar-wa"].hidden = !(isNativeMobile && level === "incompativel");
     } catch (error) {
+      const isNativeMobile = Boolean(window.__PULSO_IOS__ || window.__PULSO_ANDROID__);
       el.compatibilidade.dataset.level = "incompativel";
-      el.compatibilidade.textContent = window.__PULSO_IOS__
+      el.compatibilidade.textContent = isNativeMobile
         ? "WhatsApp desconectado · Toque em '📱 Conectar número' para enviar com som."
         : "Incompatível · " + friendly(error);
-      if (el["conectar-wa"]) el["conectar-wa"].hidden = !window.__PULSO_IOS__;
+      if (el["conectar-wa"]) el["conectar-wa"].hidden = !isNativeMobile;
     } finally {
       el.rever.disabled = false;
     }
@@ -2258,7 +2269,7 @@
     if (!result?.ok) {
       if (!result || result.detailCode === "incerto") job.deliveryUncertain = true;
       refreshQueue();
-      if (window.__PULSO_IOS__ && result?.level === "incompativel" && typeof window.__pulsoOpenWhatsAppLogin === "function") {
+      if ((window.__PULSO_IOS__ || window.__PULSO_ANDROID__) && result?.level === "incompativel" && typeof window.__pulsoOpenWhatsAppLogin === "function") {
         window.__pulsoOpenWhatsAppLogin(true);
       }
       throw new Error(result?.detail || "O WhatsApp não confirmou o envio.");

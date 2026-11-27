@@ -7,8 +7,8 @@ options:
   createIntermediateGroups: true
 settings:
   base:
-    MARKETING_VERSION: "0.9.9"
-    CURRENT_PROJECT_VERSION: "3"
+    MARKETING_VERSION: "1.0.0"
+    CURRENT_PROJECT_VERSION: "4"
     SWIFT_VERSION: "5.0"
     TARGETED_DEVICE_FAMILY: "1,2"
     IPHONEOS_DEPLOYMENT_TARGET: "15.0"
@@ -39,8 +39,8 @@ targets:
         CFBundleDisplayName: Pulso
         CFBundleName: Pulso
         CFBundleIdentifier: $(PRODUCT_BUNDLE_IDENTIFIER)
-        CFBundleShortVersionString: "0.9.9"
-        CFBundleVersion: "3"
+        CFBundleShortVersionString: "1.0.0"
+        CFBundleVersion: "4"
         CFBundlePackageType: APPL
         LSRequiresIPhoneOS: true
         LSApplicationQueriesSchemes:

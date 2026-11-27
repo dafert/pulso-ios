@@ -153,7 +153,7 @@ async function convertAudioToOggOpus(inputBuffer, ext = "wav") {
       "-i", inFile,
       "-vn",
       "-c:a", "libopus",
-      "-b:a", "32k",
+      "-b:a", "48k",
       "-vbr", "on",
       "-compression_level", "10",
       "-ar", "48000",

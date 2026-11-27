@@ -1,0 +1,8 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <style name="Theme.Pulso" parent="Theme.AppCompat.DayNight.NoActionBar">
+        <item name="android:statusBarColor">#191324</item>
+        <item name="android:navigationBarColor">#191324</item>
+        <item name="android:windowBackground">#191324</item>
+    </style>
+</resources>

@@ -3,223 +3,479 @@
 <head>
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
-  <title>Pulso para iPhone — Instalar (.ipa)</title>
+  <meta name="color-scheme" content="light dark">
+  <meta name="theme-color" content="#14101b">
+  <title>Pulso · Figurinhas com Som Open Source — por extrefad</title>
+  <meta name="description" content="Crie figurinhas animadas com som sincronizado para WhatsApp no Android, iPhone e Navegador. 100% gratuito e código aberto por extrefad.">
+  <link rel="icon" type="image/png" href="icon.png">
+  <link rel="apple-touch-icon" href="icon.png">
   <style>
     :root {
-      color-scheme: dark;
-      --bg: #14101b;
-      --card: #1f1829;
-      --accent: #7c4dff;
-      --accent2: #ffad81;
-      --ink: #f6edfa;
-      --sub: #bfb0c9;
-      --border: #3a2c4a;
+      color-scheme: light dark;
+      --bg-l: #f6f3fa; --bg-d: #120e1a;
+      --card-l: #ffffff; --card-d: #1c1528;
+      --field-l: #f0eaf7; --field-d: #261d36;
+      --ink-l: #1d152b; --ink-d: #f6effc;
+      --sub-l: #5e536e; --sub-d: #bfb1cf;
+      --rule-l: #dfd6ea; --rule-d: #382a4c;
+      --accent-l: #6a38d4; --accent-d: #9c72ff;
+      --good-l: #177a4d; --good-d: #3ad189;
+      --hot: #ffad81; --hot-ink: #27122e;
+
+      --bg: var(--bg-l); --card: var(--card-l); --field: var(--field-l);
+      --ink: var(--ink-l); --sub: var(--sub-l); --rule: var(--rule-l);
+      --accent: var(--accent-l); --good: var(--good-l);
+      font-family: Inter, -apple-system, BlinkMacSystemFont, "SF Pro Display", "Segoe UI", system-ui, sans-serif;
     }
+    @media (prefers-color-scheme: dark) {
+      :root {
+        --bg: var(--bg-d); --card: var(--card-d); --field: var(--field-d);
+        --ink: var(--ink-d); --sub: var(--sub-d); --rule: var(--rule-d);
+        --accent: var(--accent-d); --good: var(--good-d);
+      }
+    }
+    @supports (color: light-dark(white, black)) {
+      :root {
+        --bg: light-dark(var(--bg-l), var(--bg-d));
+        --card: light-dark(var(--card-l), var(--card-d));
+        --field: light-dark(var(--field-l), var(--field-d));
+        --ink: light-dark(var(--ink-l), var(--ink-d));
+        --sub: light-dark(var(--sub-l), var(--sub-d));
+        --rule: light-dark(var(--rule-l), var(--rule-d));
+        --accent: light-dark(var(--accent-l), var(--accent-d));
+        --good: light-dark(var(--good-l), var(--good-d));
+      }
+    }
+
     * { box-sizing: border-box; }
+    html { scroll-behavior: smooth; }
     body {
       margin: 0;
       min-height: 100dvh;
-      font-family: -apple-system, BlinkMacSystemFont, "SF Pro Display", "Segoe UI", system-ui, sans-serif;
-      background: radial-gradient(circle at top, #2c1c45 0%, var(--bg) 55%);
+      background: radial-gradient(circle at top center, color-mix(in srgb, var(--accent) 18%, transparent) 0%, var(--bg) 52%);
       color: var(--ink);
-      display: grid;
-      place-items: center;
-      padding: 20px 16px 36px;
+      line-height: 1.55;
+      padding-bottom: env(safe-area-inset-bottom, 24px);
     }
-    main {
-      width: 100%;
-      max-width: 440px;
+    a { color: var(--accent); }
+    .wrap { width: 100%; max-width: 960px; margin: 0 auto; padding: 18px 16px 48px; }
+
+    /* Top Nav */
+    .topbar {
+      display: flex; align-items: center; justify-content: space-between; gap: 12px;
+      padding: 10px 0 18px; flex-wrap: wrap;
+    }
+    .brand { display: flex; align-items: center; gap: 10px; text-decoration: none; color: var(--ink); font-weight: 800; font-size: 1.15rem; letter-spacing: -.03em; }
+    .brand img { width: 38px; height: 38px; border-radius: 10px; aspect-ratio: 1; }
+    .navlinks { display: flex; gap: 14px; flex-wrap: wrap; font-size: .9rem; font-weight: 600; }
+    .navlinks a { text-decoration: none; color: var(--sub); }
+    .navlinks a:hover { color: var(--ink); }
+
+    /* Hero */
+    .hero {
       background: var(--card);
-      border: 1px solid var(--border);
-      border-radius: 24px;
-      padding: 24px 20px;
-      box-shadow: 0 18px 48px #00000055;
-    }
-    .head {
-      display: flex;
+      border: 1px solid var(--rule);
+      border-radius: 26px;
+      padding: 28px 24px;
+      box-shadow: 0 20px 50px #00000022;
+      display: grid;
+      grid-template-columns: minmax(0, 1.15fr) minmax(260px, .85fr);
+      gap: 24px;
       align-items: center;
-      gap: 14px;
-      margin-bottom: 18px;
+      margin-bottom: 22px;
     }
-    .head img {
-      width: 68px;
-      height: 68px;
-      border-radius: 16px;
-      box-shadow: 0 6px 18px #00000044;
+    .pill {
+      display: inline-flex; align-items: center; gap: 6px;
+      background: var(--field); color: var(--accent);
+      border: 1px solid var(--rule); border-radius: 999px;
+      padding: 4px 12px; font-size: .78rem; font-weight: 700; margin-bottom: 12px;
     }
-    h1 { margin: 0; font-size: 1.55rem; letter-spacing: -.03em; }
-    .ver { color: var(--accent2); font-size: .88rem; font-weight: 600; margin-top: 2px; }
-    p { color: var(--sub); font-size: .92rem; line-height: 1.48; margin: 0 0 16px; }
-    .actions { display: grid; gap: 10px; margin-bottom: 18px; }
-    a.btn, button.btn {
-      display: flex;
-      align-items: center;
-      justify-content: center;
-      gap: 8px;
-      width: 100%;
-      min-height: 50px;
-      padding: 12px 16px;
-      border-radius: 14px;
-      font-weight: 700;
-      font-size: 1rem;
-      text-decoration: none;
-      border: 1px solid transparent;
-      cursor: pointer;
+    h1 { margin: 0 0 10px; font-size: clamp(1.75rem, 1.15rem + 2.4vw, 2.9rem); line-height: 1.1; letter-spacing: -.04em; }
+    h1 em { font-style: normal; color: var(--accent); }
+    .lead { color: var(--sub); font-size: .98rem; margin: 0 0 20px; }
+
+    .cta-grid { display: grid; gap: 10px; }
+    .btn {
+      display: flex; align-items: center; justify-content: center; gap: 8px;
+      width: 100%; min-height: 48px; padding: 12px 16px; border-radius: 14px;
+      font-weight: 750; font-size: .96rem; text-decoration: none;
+      border: 1px solid transparent; cursor: pointer; font-family: inherit;
+      transition: transform .15s, filter .15s;
     }
-    .primary { background: var(--accent); color: #fff; }
-    .hot { background: var(--accent2); color: #24112c; }
-    .ghost { background: #2c213a; color: var(--ink); border-color: var(--border); }
-    .box {
-      background: #171220;
-      border: 1px solid var(--border);
-      border-radius: 14px;
+    .btn:hover { filter: brightness(1.06); }
+    .btn:active { transform: translateY(1px); }
+    .btn-web { background: linear-gradient(135deg, #7444e6, #24a868); color: #fff; }
+    .btn-android { background: #1e9e60; color: #fff; }
+    .btn-ios { background: var(--hot); color: var(--hot-ink); }
+    .btn-ghost { background: var(--field); color: var(--ink); border-color: var(--rule); font-size: .88rem; min-height: 42px; }
+    .btn-row { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; }
+
+    /* Animated Video Tutorial Mockup */
+    .demo-shell {
+      background: #0f0b17;
+      border: 2px solid #3c2c57;
+      border-radius: 28px;
+      padding: 12px;
+      color: #f6effc;
+      box-shadow: 0 18px 40px #00000044;
+    }
+    .demo-notch { width: 78px; height: 6px; border-radius: 99px; background: #2d2140; margin: 2px auto 10px; }
+    .demo-screen {
+      position: relative;
+      background: #1a1326;
+      border-radius: 18px;
+      min-height: 310px;
       padding: 14px;
-      font-size: .85rem;
-      color: var(--sub);
-      line-height: 1.5;
+      overflow: hidden;
+      display: flex;
+      flex-direction: column;
+      justify-content: space-between;
     }
-    .box strong { color: var(--ink); }
-    ol { margin: 8px 0 0; padding-left: 18px; }
-    li { margin: 4px 0; }
-    code { color: var(--accent2); font-size: .82rem; word-break: break-all; }
-    .ok { color: #97debd; font-size: .84rem; text-align: center; min-height: 1.2em; margin-top: 6px; }
+    .scene { display: none; flex-direction: column; gap: 10px; animation: fadeUp .35s ease; }
+    .scene.active { display: flex; }
+    @keyframes fadeUp { from { opacity: 0; transform: translateY(8px); } to { opacity: 1; transform: translateY(0); } }
+    .scene-tag { font-size: .72rem; font-weight: 800; letter-spacing: .06em; color: #c4a6ff; text-transform: uppercase; }
+    .scene-title { font-size: 1.05rem; font-weight: 800; margin: 0; }
+    .scene-desc { font-size: .82rem; color: #c8bbd8; margin: 0; }
+
+    .mock-drop {
+      border: 1.5px dashed #9c72ff; border-radius: 14px; background: #261c38;
+      padding: 16px 12px; text-align: center;
+    }
+    .mock-vid {
+      display: inline-flex; align-items: center; gap: 8px;
+      background: #352750; padding: 8px 12px; border-radius: 10px; font-size: .82rem; font-weight: 700;
+      animation: pulseCard 1.8s infinite ease-in-out;
+    }
+    @keyframes pulseCard { 0%, 100% { transform: scale(1); } 50% { transform: scale(1.04); } }
+    .wave-bars { display: flex; align-items: flex-end; justify-content: center; gap: 4px; height: 34px; margin-top: 10px; }
+    .wave-bars span {
+      width: 5px; border-radius: 4px; background: linear-gradient(180deg, #ffad81, #9c72ff);
+      animation: eq 1.1s infinite ease-in-out;
+    }
+    .wave-bars span:nth-child(2n) { animation-delay: .18s; }
+    .wave-bars span:nth-child(3n) { animation-delay: .35s; }
+    @keyframes eq { 0%, 100% { height: 8px; } 50% { height: 32px; } }
+
+    .mock-progress { height: 10px; border-radius: 99px; background: #2a203d; overflow: hidden; margin-top: 6px; }
+    .mock-progress i { display: block; height: 100%; width: 100%; background: linear-gradient(90deg, #9c72ff, #3ad189); transform-origin: left; animation: fillBar 3.2s linear infinite; }
+    @keyframes fillBar { from { transform: scaleX(.08); } to { transform: scaleX(1); } }
+    .mock-badge-row { display: flex; gap: 6px; flex-wrap: wrap; }
+    .mock-badge { background: #291f3b; border: 1px solid #433261; border-radius: 8px; padding: 4px 8px; font-size: .74rem; color: #9cf2c8; font-weight: 700; }
+
+    .mock-code {
+      background: #103324; border: 1.5px solid #2cc77c; border-radius: 12px;
+      padding: 12px; text-align: center;
+      font-family: ui-monospace, SFMono-Regular, Menlo, monospace;
+      font-size: 1.35rem; font-weight: 800; letter-spacing: .12em; color: #fff;
+    }
+
+    .mock-chat { background: #0d1418; border-radius: 14px; padding: 12px; display: flex; flex-direction: column; align-items: flex-end; gap: 6px; }
+    .mock-bubble {
+      position: relative; background: #1e4d3b; border-radius: 14px 4px 14px 14px;
+      padding: 10px; width: 148px; text-align: center;
+    }
+    .mock-sticker {
+      width: 96px; height: 96px; margin: 0 auto 4px; border-radius: 14px;
+      background: linear-gradient(135deg, #7444e6, #ffad81);
+      display: grid; place-items: center; font-size: 2.3rem;
+      position: relative;
+    }
+    .mock-speaker {
+      position: absolute; top: 6px; left: 6px; width: 26px; height: 26px; border-radius: 50%;
+      background: #00000088; display: grid; place-items: center; font-size: .8rem;
+      animation: ringPulse 1.3s infinite;
+    }
+    @keyframes ringPulse {
+      0% { box-shadow: 0 0 0 0 rgba(58, 209, 137, 0.75); }
+      70% { box-shadow: 0 0 0 11px rgba(58, 209, 137, 0); }
+      100% { box-shadow: 0 0 0 0 rgba(58, 209, 137, 0); }
+    }
+
+    .demo-controls { display: flex; align-items: center; gap: 6px; margin-top: 10px; }
+    .demo-dots { display: flex; gap: 5px; flex: 1; }
+    .demo-dot {
+      flex: 1; height: 6px; border-radius: 99px; border: 0; padding: 0;
+      background: #322647; cursor: pointer;
+    }
+    .demo-dot[aria-pressed="true"] { background: #3ad189; }
+    .demo-play {
+      background: #2b2040; color: #fff; border: 0; border-radius: 8px;
+      padding: 4px 10px; font-size: .75rem; font-weight: 700; cursor: pointer;
+    }
+
+    /* Sections */
+    .section {
+      background: var(--card); border: 1px solid var(--rule); border-radius: 22px;
+      padding: 22px; margin-bottom: 18px;
+    }
+    h2 { margin: 0 0 10px; font-size: 1.3rem; letter-spacing: -.03em; }
+    .steps-grid { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 12px; margin-top: 14px; }
+    .step-card { background: var(--field); border: 1px solid var(--rule); border-radius: 16px; padding: 14px; }
+    .step-card h3 { margin: 0 0 6px; font-size: .98rem; }
+    .step-card p { margin: 0; color: var(--sub); font-size: .85rem; }
+
+    details.guide { background: var(--field); border: 1px solid var(--rule); border-radius: 14px; padding: 12px 14px; margin-top: 10px; }
+    details.guide summary { cursor: pointer; font-weight: 700; font-size: .92rem; }
+    details.guide ol { margin: 8px 0 0; padding-left: 18px; color: var(--sub); font-size: .87rem; }
+    details.guide li { margin: 4px 0; }
+
+    /* Donation Card */
+    .donate-box {
+      background: linear-gradient(135deg, color-mix(in srgb, var(--accent) 12%, var(--field)), color-mix(in srgb, var(--good) 10%, var(--field)));
+      border: 1px solid var(--rule); border-radius: 18px; padding: 18px; margin-top: 10px;
+    }
+    .wallet-row { display: flex; gap: 8px; flex-wrap: wrap; align-items: center; margin-top: 10px; }
+    .wallet-code {
+      flex: 1; min-width: 220px; background: var(--card); border: 1px solid var(--rule);
+      border-radius: 12px; padding: 10px 12px; font-family: ui-monospace, SFMono-Regular, Menlo, monospace;
+      font-size: .86rem; word-break: break-all; color: var(--ink);
+    }
+    .copy-btn {
+      background: var(--accent); color: #fff; border: 0; border-radius: 12px;
+      padding: 10px 16px; font-weight: 750; font-size: .88rem; cursor: pointer; min-height: 44px;
+    }
+    .copy-msg { font-size: .82rem; color: var(--good); min-height: 1.2em; margin-top: 6px; font-weight: 600; }
+
+    /* Legal & Footer */
+    .legal { font-size: .84rem; color: var(--sub); }
+    .legal code { color: var(--accent); font-size: .8rem; }
+    .legal ul { padding-left: 18px; margin: 8px 0; }
+    footer { text-align: center; color: var(--sub); font-size: .82rem; padding-top: 8px; }
+
+    @media (max-width: 780px) {
+      .hero { grid-template-columns: 1fr; padding: 20px 16px; }
+      .steps-grid { grid-template-columns: 1fr; }
+      .btn-row { grid-template-columns: 1fr; }
+    }
+    @media (prefers-reduced-motion: reduce) {
+      *, *::before, *::after { animation: none !important; transition: none !important; scroll-behavior: auto !important; }
+    }
   </style>
 </head>
 <body>
-  <main>
-    <div class="head">
-      <img src="icon.png" alt="Pulso">
+  <div class="wrap">
+    <header class="topbar">
+      <a class="brand" href="./">
+        <img src="icon.png" alt="Pulso" width="38" height="38">
+        <span>Pulso · por extrefad</span>
+      </a>
+      <nav class="navlinks" aria-label="Navegação">
+        <a href="app/">App Web</a>
+        <a href="#tutorial">Tutorial</a>
+        <a href="#doacao">Apoiar (USDT)</a>
+        <a href="#direitos">Direitos</a>
+        <a href="https://github.com/dafert/pulso-ios" target="_blank" rel="noopener">GitHub</a>
+      </nav>
+    </header>
+
+    <section class="hero">
       <div>
-        <h1>Pulso iOS</h1>
-        <div class="ver">Versão 0.9.9 · iOS 15+ · Figurinhas com Som</div>
+        <span class="pill">🔊 100% Open Source · v1.0.0 · por extrefad</span>
+        <h1>Figurinhas <em>com som</em> para WhatsApp.</h1>
+        <p class="lead">Escolha qualquer vídeo, gere a figurinha animada em <strong>HD (até 20 fps · 512 px)</strong> com áudio sincronizado e envie pro WhatsApp — grátis, local e de código aberto.</p>
+
+        <div class="cta-grid">
+          <a class="btn btn-web" href="app/">🌐 Abrir App direto no Navegador (Grátis)</a>
+          <div class="btn-row">
+            <a class="btn btn-android" href="https://github.com/dafert/pulso-ios/releases/download/v1.0.0/Pulso-Android.apk">🤖 Baixar Android (.apk)</a>
+            <a class="btn btn-ios" href="https://github.com/dafert/pulso-ios/releases/download/v1.0.0/Pulso-iOS.ipa">🍎 Baixar iPhone (.ipa)</a>
+          </div>
+          <div class="btn-row">
+            <a class="btn btn-ghost" href="https://github.com/dafert/pulso-ios" target="_blank" rel="noopener">💻 Código-Fonte (GitHub)</a>
+            <a class="btn btn-ghost" href="sidestore://source?url=https://dafert.github.io/pulso-ios/source.json">⚡ Fonte SideStore (iOS)</a>
+          </div>
+        </div>
       </div>
-    </div>
-    <p>Crie figurinhas animadas com som sincronizado direto no seu iPhone 11 e envie para o WhatsApp.</p>
 
-    <div class="actions">
-      <!-- Versão Web (PWA) direto no navegador — sem precisar instalar nada -->
-      <a class="btn primary" href="app/" style="background: linear-gradient(135deg, #7c4dff, #25a365); font-size: 1.04rem;">
-        🌐 Abrir Pulso direto no Navegador (Web App · Grátis)
-      </a>
+      <!-- Tutorial Interativo em Animação (estilo vídeo demo leve) -->
+      <div class="demo-shell" aria-label="Animação tutorial de como usar o Pulso">
+        <div class="demo-notch" aria-hidden="true"></div>
+        <div class="demo-screen">
+          <div class="scene active" data-scene="0">
+            <span class="scene-tag">Passo 1 de 4 · Vídeo</span>
+            <p class="scene-title">Escolha um vídeo da Galeria</p>
+            <p class="scene-desc">Funciona com MP4, MOV, GIF ou até 15 arquivos na fila.</p>
+            <div class="mock-drop">
+              <div class="mock-vid">🎬 meme_engracado.mp4 · 0:05</div>
+              <div class="wave-bars" aria-hidden="true">
+                <span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span>
+              </div>
+            </div>
+          </div>
 
-      <!-- Botão oficial: aciona o manifest do repositório quando o certificado com seu UDID estiver ativo -->
-      <a class="btn hot" href="itms-services://?action=download-manifest&url=https://dafert.github.io/pulso-ios/manifest.plist">
-        📲 Instalar Direto no Safari (Certificado Oficial)
-      </a>
+          <div class="scene" data-scene="1">
+            <span class="scene-tag">Passo 2 de 4 · Qualidade HD</span>
+            <p class="scene-title">Toque em "Criar Automático"</p>
+            <p class="scene-desc">Remove bordas, normaliza o som e gera WebP + Opus em segundos.</p>
+            <div class="mock-badge-row">
+              <span class="mock-badge">512 × 512 HD</span>
+              <span class="mock-badge">20 fps suave</span>
+              <span class="mock-badge">Opus 48 kHz</span>
+              <span class="mock-badge">Drift 0 ms</span>
+            </div>
+            <div class="mock-progress"><i></i></div>
+          </div>
 
-      <!-- Botão pré-pronto para Perfil de Configuração (.mobileconfig) -->
-      <!-- Você pode alterar o texto e o arquivo (href) como quiser -->
-      <a class="btn ghost" id="main-mobileconfig-btn" href="perfil.mobileconfig">
-        🛡️ <span id="main-mobileconfig-label">Instalar Perfil (.mobileconfig)</span>
-      </a>
+          <div class="scene" data-scene="2">
+            <span class="scene-tag">Passo 3 de 4 · Conexão</span>
+            <p class="scene-title">Conecte seu WhatsApp 1 vez</p>
+            <p class="scene-desc">Digite seu número e cole o código de 8 dígitos em Dispositivos conectados.</p>
+            <div class="mock-code">K7B2-M9X4</div>
+            <p class="scene-desc" style="text-align:center;color:#9cf2c8;font-weight:700;">🟢 Conectado! Fica salvo no aparelho.</p>
+          </div>
 
-      <!-- Botão pré-pronto para você colocar seu link manual de servidor externo -->
-      <a class="btn ghost" id="custom-install-btn" href="itms-services://?action=download-manifest&url=https://SEU-LINK-AQUI/manifest.plist">
-        🚀 Instalar do Servidor Externo (Link Manual)
-      </a>
+          <div class="scene" data-scene="3">
+            <span class="scene-tag">Passo 4 de 4 · Pronto!</span>
+            <p class="scene-title">Figurinha com som na conversa</p>
+            <p class="scene-desc">Chega direto em "Você" — toque no alto-falante 🔊 para ouvir e favorite!</p>
+            <div class="mock-chat">
+              <div class="mock-bubble">
+                <div class="mock-sticker">
+                  <span class="mock-speaker">🔊</span>
+                  ⚡
+                </div>
+                <span style="font-size:.72rem;color:#9cf2c8;font-weight:700;">🎵 Som sincronizado! ✓✓</span>
+              </div>
+            </div>
+          </div>
 
-      <a class="btn primary" href="https://github.com/dafert/pulso-ios/releases/download/v0.9.9/Pulso-iOS.ipa">
-        ⬇ Baixar Pulso-iOS.ipa (v0.9.9)
-      </a>
-      <a class="btn ghost" href="sidestore://source?url=https://dafert.github.io/pulso-ios/source.json">
-        ⚡ Instalar via SideStore
-      </a>
-      <a class="btn ghost" href="altstore://source?url=https://dafert.github.io/pulso-ios/source.json">
-        🔄 Abrir no AltStore
-      </a>
-      <a class="btn ghost" href="apple-magnifier://install?url=https://github.com/dafert/pulso-ios/releases/download/v0.9.9/Pulso-iOS.ipa">
-        🧌 Instalar via TrollStore
-      </a>
-      <button class="btn ghost" type="button" id="copy-source">
-        📋 Copiar link da Fonte (SideStore / AltStore)
-      </button>
-    </div>
-
-    <!-- Campo interativo para testar qualquer URL de manifest externa sem precisar editar código -->
-    <div class="box" style="margin-bottom: 16px;">
-      <strong>Instalar por URL Externa Personalizada:</strong>
-      <p style="margin: 6px 0 10px; font-size: .82rem;">Cole abaixo o link do seu <code>manifest.plist</code> hospedado em outro servidor:</p>
-      <input type="url" id="custom-manifest-url" placeholder="https://seu-servidor.com/manifest.plist" style="width: 100%; padding: 10px 12px; border-radius: 10px; border: 1px solid var(--border); background: #231a30; color: #fff; font-size: .88rem; margin-bottom: 8px;">
-      <button class="btn primary" type="button" id="btn-trigger-custom" style="min-height: 42px; font-size: .92rem;">
-        📲 Instalar este Manifest no Safari
-      </button>
-    </div>
-
-    <!-- Campo interativo para Perfil .mobileconfig com Nome e Link personalizáveis -->
-    <div class="box" style="margin-bottom: 16px;">
-      <strong>Perfil de Configuração (.mobileconfig):</strong>
-      <p style="margin: 6px 0 10px; font-size: .82rem;">Defina o nome do botão e o link do seu arquivo <code>.mobileconfig</code>:</p>
-      <input type="text" id="input-config-name" placeholder="Nome do botão (ex: Meu Perfil)" value="Instalar Perfil (.mobileconfig)" style="width: 100%; padding: 10px 12px; border-radius: 10px; border: 1px solid var(--border); background: #231a30; color: #fff; font-size: .88rem; margin-bottom: 8px;">
-      <input type="text" id="input-config-url" placeholder="URL ou nome do arquivo (ex: perfil.mobileconfig)" value="perfil.mobileconfig" style="width: 100%; padding: 10px 12px; border-radius: 10px; border: 1px solid var(--border); background: #231a30; color: #fff; font-size: .88rem; margin-bottom: 8px;">
-      <div style="display: flex; gap: 8px;">
-        <button class="btn hot" type="button" id="btn-download-config" style="min-height: 42px; font-size: .92rem; flex: 1;">
-          🛡️ Baixar / Instalar Perfil
-        </button>
-        <button class="btn ghost" type="button" id="btn-save-config" style="min-height: 42px; font-size: .92rem;">
-          💾 Salvar Nome
-        </button>
+          <div class="demo-controls">
+            <div class="demo-dots">
+              <button type="button" class="demo-dot" data-go="0" aria-pressed="true" aria-label="Passo 1"></button>
+              <button type="button" class="demo-dot" data-go="1" aria-pressed="false" aria-label="Passo 2"></button>
+              <button type="button" class="demo-dot" data-go="2" aria-pressed="false" aria-label="Passo 3"></button>
+              <button type="button" class="demo-dot" data-go="3" aria-pressed="false" aria-label="Passo 4"></button>
+            </div>
+            <button type="button" class="demo-play" id="demo-toggle">⏸ Pausar</button>
+          </div>
+        </div>
       </div>
-    </div>
-    <div class="ok" id="msg"></div>
+    </section>
 
-    <div class="box">
-      <strong>Como instalar grátis (7 dias, sem licença paga):</strong>
-      <ol>
-        <li><strong>Mais fácil (com PC na 1ª vez):</strong> baixe o <strong>Sideloadly</strong> no PC, conecte o iPhone 11 no cabo, arraste o <code>Pulso-iOS.ipa</code>, coloque seu Apple ID gratuito e clique em <strong>Start</strong>.</li>
-        <li><strong>Para renovar no próprio iPhone sem PC:</strong> use o <strong>SideStore</strong> e toque em <strong>Instalar via SideStore</strong> acima.</li>
-        <li>No iPhone: <strong>Ajustes → Geral → Gestão de VPN e Dispositivo</strong> → <strong>Confiar</strong> no seu Apple ID (e ative o <strong>Modo de Desenvolvedor</strong> em Privacidade e Segurança se estiver no iOS 16+).</li>
-      </ol>
-    </div>
-  </main>
+    <section class="section" id="tutorial">
+      <h2>🎬 Tutorial rápido: como usar em qualquer aparelho</h2>
+      <div class="steps-grid">
+        <div class="step-card">
+          <h3>1. Escolha a plataforma</h3>
+          <p>Baixe o <strong>APK</strong> no Android, instale o <strong>IPA</strong> no iPhone ou abra direto o <strong>App Web</strong> no navegador.</p>
+        </div>
+        <div class="step-card">
+          <h3>2. Selecione o vídeo</h3>
+          <p>Toque em <strong>Escolher vídeo</strong> e clique em <strong>✨ Criar Automático (HD)</strong> — o som já sai limpo e sincronizado.</p>
+        </div>
+        <div class="step-card">
+          <h3>3. Envie com som</h3>
+          <p>Conecte seu WhatsApp pelo número (código de 8 dígitos) e clique em <strong>🔊 Enviar</strong>. A figurinha chega em "Você"!</p>
+        </div>
+      </div>
+
+      <details class="guide">
+        <summary>🤖 Como instalar no Android (.apk) — mais fácil</summary>
+        <ol>
+          <li>Toque em <strong>Baixar Android (.apk)</strong> acima.</li>
+          <li>Abra o arquivo <code>Pulso-Android.apk</code> baixado e permita instalar apps de fontes desconhecidas (só na 1ª vez).</li>
+          <li>Abra o Pulso, conecte seu WhatsApp pelo número na aba <strong>💬 Conectar WhatsApp</strong> e envie suas figurinhas com som!</li>
+        </ol>
+      </details>
+
+      <details class="guide">
+        <summary>🍎 Como instalar no iPhone (.ipa) — grátis</summary>
+        <ol>
+          <li>Baixe o <code>Pulso-iOS.ipa</code> acima e o <strong>Sideloadly</strong> no PC (ou use <strong>SideStore</strong> no iPhone).</li>
+          <li>Arraste o <code>.ipa</code> para o Sideloadly, coloque seu Apple ID gratuito e clique em <strong>Start</strong>.</li>
+          <li>No iPhone: <strong>Ajustes → Geral → Gestão de VPN e Dispositivo → Confiar</strong> (e ative o <strong>Modo de Desenvolvedor</strong> em Privacidade e Segurança).</li>
+        </ol>
+      </details>
+
+      <details class="guide">
+        <summary>🌐 Como usar pelo Navegador (PC ou Celular)</summary>
+        <ol>
+          <li>Abra o <a href="app/">App Web</a> para criar, normalizar o áudio e baixar sua figurinha em WebP + Ogg/Opus 100% local.</li>
+          <li>Para enviar com som direto do navegador para o WhatsApp, rode o servidor open-source da pasta <code>server/</code> (incluído no GitHub) ou use a extensão do Chrome no PC.</li>
+        </ol>
+      </details>
+    </section>
+
+    <section class="section" id="doacao">
+      <h2>💛 Apoie o Projeto (Doação Voluntária em USDT)</h2>
+      <p style="margin:0;color:var(--sub);font-size:.92rem;">O Pulso é mantido de forma <strong>100% gratuita, sem anúncios e de código aberto</strong> por <strong>extrefad</strong>. Se o projeto te ajudou, qualquer doação voluntária ajuda a manter as atualizações e melhorias!</p>
+      <div class="donate-box">
+        <strong style="font-size:.92rem;">Carteira USDT (rede TRC-20 / BEP-20 / ERC-20 — confirme a rede antes de enviar):</strong>
+        <div class="wallet-row">
+          <div class="wallet-code" id="usdt-wallet">EM_BREVE_CARTEIRA_USDT_EXTREFAD</div>
+          <button type="button" class="copy-btn" id="copy-wallet">📋 Copiar Carteira USDT</button>
+        </div>
+        <div class="copy-msg" id="copy-msg" role="status"></div>
+      </div>
+    </section>
+
+    <section class="section legal" id="direitos">
+      <h2>⚖️ Direitos, Privacidade e Licença Open Source</h2>
+      <ul>
+        <li><strong>Mantenedor do Site, Web App, Android e iOS:</strong> <strong>extrefad</strong> (<a href="https://github.com/dafert/pulso-ios" target="_blank" rel="noopener">github.com/dafert/pulso-ios</a>).</li>
+        <li><strong>Aviso Obrigatório da Base Original:</strong> <code>Required Notice: Copyright Shirtep (https://github.com/Shirtep/WA-audio-stickers)</code> — distribuído sob a licença <a href="https://polyformproject.org/licenses/noncommercial/1.0.0" target="_blank" rel="noopener">PolyForm Noncommercial License 1.0.0</a> (<a href="LICENSE.md">ver LICENSE.md</a>). Uso gratuito e não comercial; doações são apoio voluntário ao mantenedor.</li>
+        <li><strong>Componentes de Terceiros (<a href="THIRD_PARTY.md">ver THIRD_PARTY.md</a>):</strong> <code>libwebp</code> v1.6.0 (BSD-3-Clause), <code>Emscripten</code> 5.0.2 (MIT/NCSA) e <code>MP4Box.js</code> v2.3.0 (BSD-3-Clause).</li>
+        <li><strong>Privacidade:</strong> Todo processamento de vídeo e áudio acontece localmente no seu dispositivo.</li>
+        <li><strong>Isenção:</strong> Projeto independente open source, sem vínculo oficial com WhatsApp LLC ou Meta Platforms, Inc.</li>
+      </ul>
+    </section>
+
+    <footer>
+      Pulso Open Source v1.0.0 · Mantido por <strong>extrefad</strong> · Hospedado grátis com código aberto no GitHub &amp; Cloudflare Pages.
+    </footer>
+  </div>
+
   <script>
-    // Gerenciamento do Perfil .mobileconfig com Nome e Link personalizáveis
-    const savedName = localStorage.getItem("pulso_config_name");
-    const savedUrl = localStorage.getItem("pulso_config_url");
-    if (savedName) {
-      document.getElementById("main-mobileconfig-label").textContent = savedName;
-      document.getElementById("input-config-name").value = savedName;
-    }
-    if (savedUrl) {
-      document.getElementById("main-mobileconfig-btn").href = savedUrl;
-      document.getElementById("input-config-url").value = savedUrl;
-    }
+    (function () {
+      var scenes = Array.from(document.querySelectorAll(".scene"));
+      var dots = Array.from(document.querySelectorAll(".demo-dot"));
+      var toggle = document.getElementById("demo-toggle");
+      var idx = 0;
+      var playing = !matchMedia("(prefers-reduced-motion: reduce)").matches;
+      var timer = null;
 
-    document.getElementById("btn-save-config").addEventListener("click", () => {
-      const name = (document.getElementById("input-config-name").value || "").trim() || "Instalar Perfil (.mobileconfig)";
-      const url = (document.getElementById("input-config-url").value || "").trim() || "perfil.mobileconfig";
-      localStorage.setItem("pulso_config_name", name);
-      localStorage.setItem("pulso_config_url", url);
-      document.getElementById("main-mobileconfig-label").textContent = name;
-      document.getElementById("main-mobileconfig-btn").href = url;
-      document.getElementById("msg").textContent = "Nome e Link do perfil salvos com sucesso!";
-    });
-
-    document.getElementById("btn-download-config").addEventListener("click", () => {
-      const url = (document.getElementById("input-config-url").value || "").trim() || "perfil.mobileconfig";
-      window.location.href = url;
-    });
-
-    document.getElementById("btn-trigger-custom").addEventListener("click", () => {
-      let rawUrl = (document.getElementById("custom-manifest-url").value || "").trim();
-      if (!rawUrl) {
-        alert("Por favor, digite ou cole a URL do seu manifest.plist");
-        return;
+      function showScene(n) {
+        idx = (n + scenes.length) % scenes.length;
+        scenes.forEach(function (s, i) { s.classList.toggle("active", i === idx); });
+        dots.forEach(function (d, i) { d.setAttribute("aria-pressed", String(i === idx)); });
       }
-      if (!rawUrl.startsWith("itms-services://")) {
-        rawUrl = "itms-services://?action=download-manifest&url=" + encodeURIComponent(rawUrl);
+      function startLoop() {
+        clearInterval(timer);
+        if (!playing) return;
+        timer = setInterval(function () { showScene(idx + 1); }, 3600);
       }
-      window.location.href = rawUrl;
-    });
+      dots.forEach(function (d) {
+        d.addEventListener("click", function () {
+          showScene(Number(d.dataset.go));
+          startLoop();
+        });
+      });
+      if (toggle) {
+        toggle.textContent = playing ? "⏸ Pausar" : "▶ Reproduzir";
+        toggle.addEventListener("click", function () {
+          playing = !playing;
+          toggle.textContent = playing ? "⏸ Pausar" : "▶ Reproduzir";
+          if (playing) startLoop(); else clearInterval(timer);
+        });
+      }
+      startLoop();
 
-    document.getElementById("copy-source").addEventListener("click", async () => {
-      const url = "https://dafert.github.io/pulso-ios/source.json";
-      try {
-        await navigator.clipboard.writeText(url);
-        document.getElementById("msg").textContent = "Link da fonte copiado!";
-      } catch {
-        prompt("Copie o link da fonte:", url);
+      var copyBtn = document.getElementById("copy-wallet");
+      var walletEl = document.getElementById("usdt-wallet");
+      var msgEl = document.getElementById("copy-msg");
+      if (copyBtn && walletEl) {
+        copyBtn.addEventListener("click", async function () {
+          var val = (walletEl.textContent || "").trim();
+          try {
+            await navigator.clipboard.writeText(val);
+            msgEl.textContent = "✅ Endereço USDT copiado!";
+          } catch (e) {
+            prompt("Copie o endereço USDT:", val);
+          }
+        });
       }
-    });
+    })();
   </script>
 </body>
 </html>

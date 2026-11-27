@@ -1,0 +1,71 @@
+name: Compilar Pulso Android (.apk)
+
+on:
+  push:
+    branches: [ main, master ]
+    paths:
+      - 'android/**'
+      - '.github/workflows/build-apk.yml'
+  workflow_dispatch:
+
+permissions:
+  contents: write
+
+jobs:
+  build-apk:
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Baixar código
+        uses: actions/checkout@v4
+
+      - name: Configurar Java 17
+        uses: actions/setup-java@v4
+        with:
+          distribution: temurin
+          java-version: '17'
+
+      - name: Configurar Gradle 8.10.2
+        uses: gradle/actions/setup-gradle@v4
+        with:
+          gradle-version: '8.10.2'
+
+      - name: Preparar chave de assinatura Android
+        run: |
+          KEYSTORE="$RUNNER_TEMP/pulso-release.jks"
+          keytool -genkeypair -v \
+            -keystore "$KEYSTORE" \
+            -alias pulso \
+            -keyalg RSA \
+            -keysize 2048 \
+            -validity 10000 \
+            -storepass pulso123456 \
+            -keypass pulso123456 \
+            -dname "CN=Pulso Open Source, OU=extrefad, O=Pulso, L=BR, S=BR, C=BR"
+          echo "ANDROID_KEYSTORE_PATH=$KEYSTORE" >> "$GITHUB_ENV"
+          echo "ANDROID_KEYSTORE_PASSWORD=pulso123456" >> "$GITHUB_ENV"
+          echo "ANDROID_KEY_ALIAS=pulso" >> "$GITHUB_ENV"
+          echo "ANDROID_KEY_PASSWORD=pulso123456" >> "$GITHUB_ENV"
+
+      - name: Compilar Pulso-Android.apk (Release)
+        working-directory: android
+        run: |
+          gradle assembleRelease --no-daemon --stacktrace
+          cp app/build/outputs/apk/release/app-release.apk ../Pulso-Android.apk
+          ls -lh ../Pulso-Android.apk
+
+      - name: Publicar Artifact Pulso-Android.apk
+        uses: actions/upload-artifact@v4
+        with:
+          name: Pulso-Android-apk
+          path: Pulso-Android.apk
+          retention-days: 30
+
+      - name: Publicar Pulso-Android.apk na Release v1.0.0
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        run: |
+          if ! gh release view v1.0.0 >/dev/null 2>&1; then
+            gh release create v1.0.0 --title "Pulso v1.0.0 (Android + iOS + Web)" --notes "Versão 1.0.0 Open Source por extrefad: qualidade de vídeo HD aprimorada (até 20 fps / 512px), interface simplificada, Android (.apk), iOS (.ipa) e Web App."
+          fi
+          gh release upload v1.0.0 Pulso-Android.apk --clobber
