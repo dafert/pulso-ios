@@ -267,6 +267,8 @@
       var API = "https://pulso-api.daviddaguerdegodoy.workers.dev";
       var SID_KEY = "pulso_cf_session_id";
       var pollTimer = null;
+      var apiChain = Promise.resolve();
+      var statusInFlight = null;
 
       function getSid() {
         try { return localStorage.getItem(SID_KEY) || ""; } catch (e) { return ""; }
@@ -279,19 +281,30 @@
         } catch (e) {}
       }
 
-      async function api(path, method, body) {
-        var sid = getSid();
-        var headers = { "Content-Type": "application/json" };
-        if (sid) headers["X-Pulso-Session"] = sid;
-        var opts = { method: method || "GET", headers: headers };
-        if (body !== undefined) opts.body = JSON.stringify(Object.assign(sid ? { sessionId: sid } : {}, body));
-        var url = API + path;
-        if ((method || "GET") === "GET" && sid) url += "?sessionId=" + encodeURIComponent(sid);
-        var res = await fetch(url, opts);
-        var data = await res.json().catch(function () { return { ok: false, detail: "Resposta inválida." }; });
-        if (data && data.sessionId) setSid(data.sessionId);
-        if (!res.ok && data.ok !== false) data.ok = false;
-        return data;
+      function api(path, method, body) {
+        var isStatus = path === "/api/session/status" && (method || "GET") === "GET";
+        if (isStatus && statusInFlight) return statusInFlight;
+        var run = async function () {
+          var sid = getSid();
+          var headers = { "Content-Type": "application/json" };
+          if (sid) headers["X-Pulso-Session"] = sid;
+          var opts = { method: method || "GET", headers: headers };
+          if (body !== undefined) opts.body = JSON.stringify(Object.assign(sid ? { sessionId: sid } : {}, body));
+          var url = API + path;
+          if ((method || "GET") === "GET" && sid) url += "?sessionId=" + encodeURIComponent(sid);
+          var res = await fetch(url, opts);
+          var data = await res.json().catch(function () { return { ok: false, detail: "Resposta inválida." }; });
+          if (data && data.sessionId) setSid(data.sessionId);
+          if (!res.ok && data.ok !== false) data.ok = false;
+          return data;
+        };
+        var p = apiChain.then(run, run);
+        apiChain = p.catch(function () {});
+        if (isStatus) {
+          statusInFlight = p;
+          p.finally(function () { if (statusInFlight === p) statusInFlight = null; });
+        }
+        return p;
       }
 
       var badge = document.getElementById("ios-badge");

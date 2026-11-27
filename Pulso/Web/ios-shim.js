@@ -75,6 +75,36 @@
     return b64ToU8(res.oggBase64);
   };
 
+  window.__pulsoEncodeAudioFallback = function (channels, sampleRate) {
+    var rate = sampleRate || 48000;
+    var left = channels[0];
+    var right = channels.length > 1 ? channels[1] : null;
+    var len = left.length;
+    var dataSize = len * 2;
+    var buf = new ArrayBuffer(44 + dataSize);
+    var dv = new DataView(buf);
+    function writeStr(off, s) { for (var i = 0; i < s.length; i++) dv.setUint8(off + i, s.charCodeAt(i)); }
+    writeStr(0, "RIFF");
+    dv.setUint32(4, 36 + dataSize, true);
+    writeStr(8, "WAVE");
+    writeStr(12, "fmt ");
+    dv.setUint32(16, 16, true);
+    dv.setUint16(20, 1, true);
+    dv.setUint16(22, 1, true);
+    dv.setUint32(24, rate, true);
+    dv.setUint32(28, rate * 2, true);
+    dv.setUint16(32, 2, true);
+    dv.setUint16(34, 16, true);
+    writeStr(36, "data");
+    dv.setUint32(40, dataSize, true);
+    for (var j = 0; j < len; j++) {
+      var sample = right ? (left[j] + right[j]) * 0.5 : left[j];
+      var clamped = Math.max(-1, Math.min(1, sample));
+      dv.setInt16(44 + j * 2, clamped < 0 ? clamped * 0x8000 : clamped * 0x7fff, true);
+    }
+    return new Uint8Array(buf);
+  };
+
   window.chrome = window.chrome || {};
   window.chrome.storage = {
     local: {

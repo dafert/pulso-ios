@@ -38,6 +38,8 @@
   var sessionId = loadSessionId();
   var waConnected = false;
   var pollTimer = null;
+  var apiChain = Promise.resolve();
+  var statusInFlight = null;
 
   // --- Ponte com a Extensão Pulso (conecta direto na aba aberta do WhatsApp Web) ---
   var extAvailable = false;
@@ -92,22 +94,37 @@
     }
   }
 
-  async function apiCall(path, method, body) {
-    var headers = { "Content-Type": "application/json" };
-    if (sessionId) headers["X-Pulso-Session"] = sessionId;
-    var opts = { method: method || "GET", headers: headers };
-    if (body !== undefined) {
-      opts.body = JSON.stringify(Object.assign(sessionId ? { sessionId: sessionId } : {}, body));
+  function runSerialized(fn) {
+    var next = apiChain.then(fn, fn);
+    apiChain = next.catch(function () {});
+    return next;
+  }
+
+  function apiCall(path, method, body) {
+    var isStatus = path === "/api/session/status" && (method || "GET") === "GET";
+    if (isStatus && statusInFlight) return statusInFlight;
+    var p = runSerialized(async function () {
+      var headers = { "Content-Type": "application/json" };
+      if (sessionId) headers["X-Pulso-Session"] = sessionId;
+      var opts = { method: method || "GET", headers: headers };
+      if (body !== undefined) {
+        opts.body = JSON.stringify(Object.assign(sessionId ? { sessionId: sessionId } : {}, body));
+      }
+      var url = apiUrl + path;
+      if ((method || "GET") === "GET" && sessionId) {
+        url += (path.indexOf("?") >= 0 ? "&" : "?") + "sessionId=" + encodeURIComponent(sessionId);
+      }
+      var resp = await fetch(url, opts);
+      var data = await resp.json().catch(function () { return { ok: false, detail: "Resposta inválida do servidor." }; });
+      if (data && data.sessionId) saveSessionId(data.sessionId);
+      if (!resp.ok && data.ok !== false) data.ok = false;
+      return data;
+    });
+    if (isStatus) {
+      statusInFlight = p;
+      p.finally(function () { if (statusInFlight === p) statusInFlight = null; });
     }
-    var url = apiUrl + path;
-    if ((method || "GET") === "GET" && sessionId) {
-      url += (path.indexOf("?") >= 0 ? "&" : "?") + "sessionId=" + encodeURIComponent(sessionId);
-    }
-    var resp = await fetch(url, opts);
-    var data = await resp.json().catch(function () { return { ok: false, detail: "Resposta inválida do servidor." }; });
-    if (data && data.sessionId) saveSessionId(data.sessionId);
-    if (!resp.ok && data.ok !== false) data.ok = false;
-    return data;
+    return p;
   }
 
   window.__pulsoServerState = function () {
@@ -326,6 +343,7 @@
     stopPolling();
     pollTimer = setInterval(async function () {
       if (!sessionId) { stopPolling(); return; }
+      if (statusInFlight) return;
       try {
         var st = await apiCall("/api/session/status", "GET");
         if (st && st.state === "idle") {

@@ -560,8 +560,17 @@
       const bitrate = Math.min(48e3, Math.max(16e3, Math.floor(target * 7.5 / Math.max(0.1, duration))));
       const bytes = await window.__pulsoEncodeOpusNative(mono, bitrate);
       if (bytes.length > 1e6) throw new Error("O áudio excedeu 1 MB. Reduza o trecho.");
+      let previewUrl = null;
+      try {
+        const canPlayOgg = typeof document !== "undefined" && document.createElement("audio").canPlayType("audio/ogg; codecs=opus") !== "";
+        if (!canPlayOgg && typeof window.__pulsoEncodeAudioFallback === "function") {
+          const wavBytes = window.__pulsoEncodeAudioFallback([mono], AUDIO_RATE);
+          previewUrl = URL.createObjectURL(new Blob([wavBytes], { type: "audio/wav" }));
+        }
+      } catch {}
       return {
         bytes,
+        previewUrl,
         duration,
         channels: 1,
         signal: pcm.signal,
@@ -1732,6 +1741,7 @@
   }
   function clearAudio(job) {
     if (job.audio?.url) URL.revokeObjectURL(job.audio.url);
+    if (job.audio?.previewUrl) URL.revokeObjectURL(job.audio.previewUrl);
     job.audio = null;
     clearResult(job);
   }
@@ -1791,7 +1801,7 @@
   function updatePreview() {
     const result = active?.result;
     const audio = active?.audio;
-    const previewAudioUrl = audio?.url || (active?.sound === "extra" ? active.extraUrl : active?.sound === "original" && !active.imageType ? active.url : null);
+    const previewAudioUrl = audio?.previewUrl || audio?.url || (active?.sound === "extra" ? active.extraUrl : active?.sound === "original" && !active.imageType ? active.url : null);
     for (const id of ["webp", "celular-webp"]) {
       const image = by(id);
       if (result) {
