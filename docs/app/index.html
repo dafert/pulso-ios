@@ -8,7 +8,7 @@
   <meta name="apple-mobile-web-app-capable" content="yes">
   <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
   <meta name="apple-mobile-web-app-title" content="Pulso">
-  <title>Pulso Web · Editor de figurinhas com som</title>
+  <title>Pulso — Editor de figurinhas com som</title>
   <link rel="manifest" href="manifest.webmanifest">
   <link rel="icon" type="image/svg+xml" href="icons/pulso.svg">
   <link rel="apple-touch-icon" href="icons/icon-192.png">
@@ -22,62 +22,62 @@
   <header class="masthead">
     <div class="masthead-main">
       <div class="identity"><img id="marca" alt="" width="34" height="34"><span id="nome"></span></div>
-      <span class="private" id="privacidade">100% no navegador</span>
+      <span class="private" id="privacidade">Processamento local</span>
       <div class="web-nav-actions">
-        <button type="button" id="install-app" class="secondary" hidden>📲 Instalar App Web</button>
-        <a href="../" class="flat nav-link">⬇ App iPhone (.ipa)</a>
+        <a href="../" class="flat nav-link">Início</a>
+        <a href="https://github.com/dafert/pulso-ios/releases/download/v1.0.0/Pulso-Android.apk" class="secondary nav-link">Android (.apk)</a>
+        <a href="https://github.com/dafert/pulso-ios/releases/download/v1.0.0/Pulso-iOS.ipa" class="secondary nav-link">iOS (.ipa)</a>
+        <button type="button" id="install-app" class="flat" hidden>Instalar Web</button>
       </div>
       <button type="button" id="fechar-painel" class="flat close-panel" hidden aria-label="Recolher painel">×</button>
     </div>
     <div class="integration">
-      <p id="compatibilidade" role="status">Iniciando editor local…</p>
+      <p id="compatibilidade" role="status">Editor local pronto.</p>
       <p id="install-status" class="muted" role="status"></p>
       <button type="button" id="rever" class="flat" hidden>Verificar</button>
     </div>
   </header>
   <main id="estudio" tabindex="-1">
     <section class="cover" aria-labelledby="titulo">
-      <div><h1 id="titulo">Figurinha <em>com som</em> em 1 clique.</h1><p>Escolha seu vídeo, toque em <strong>Criar Automático (HD)</strong> e mande com som direto pro WhatsApp ou baixe na hora.</p></div>
-      <button type="button" id="automatico" class="auto">✨ Criar Automático (HD)</button>
+      <div><h1 id="titulo">Figurinha <em>com som</em>.</h1><p>Escolha um vídeo ou imagem para gerar o WebP animado em 512 × 512 com áudio sincronizado.</p></div>
+      <button type="button" id="automatico" class="auto">Criar automático</button>
     </section>
 
-    <section class="card wa-connect-card" id="wa-connect-card" aria-labelledby="wa-connect-title">
+    <section class="card wa-connect-card" id="wa-connect-card" hidden aria-labelledby="wa-connect-title">
       <div class="wa-connect-head">
         <div>
-          <h2 id="wa-connect-title">🔊 Conectar seu WhatsApp</h2>
-          <span class="wa-badge" id="wa-badge" data-state="idle">⚪ WhatsApp Desconectado</span>
+          <h2 id="wa-connect-title">Conectar WhatsApp</h2>
+          <span class="wa-badge" id="wa-badge" data-state="idle">Desconectado</span>
         </div>
-        <button type="button" id="wa-logout-btn" class="flat" hidden>🚪 Desconectar</button>
+        <button type="button" id="wa-logout-btn" class="flat" hidden>Desconectar</button>
       </div>
-      <p id="wa-connect-msg" class="muted help" role="status">Conecte seu WhatsApp pelo número (código de 8 dígitos) ou QR Code para enviar figurinhas com som direto para a conversa "Você".</p>
+      <p id="wa-connect-msg" class="muted help" role="status">Conecte seu WhatsApp por código de 8 dígitos ou QR Code para enviar direto para a conversa "Você".</p>
 
       <div id="wa-login-forms">
         <form id="wa-phone-form" class="wa-phone-form" novalidate>
           <div class="wa-phone-hint-wrap">
-            <label for="wa-phone" class="wa-field-label">Conectar com número de telefone (sem QR Code)</label>
-            <span id="wa-phone-hint" class="hint">Formato: DDI (+55) e DDD + número, ex: 11999999999</span>
+            <label for="wa-phone" class="wa-field-label">Conectar por número de telefone</label>
+            <span id="wa-phone-hint" class="hint">Informe DDI (+55) e DDD + número, ex: 11999999999</span>
           </div>
           <div class="wa-phone-row">
             <input type="text" id="wa-ddi" name="ddi" value="+55" required pattern="\+?[0-9]{1,4}" autocomplete="tel-country-code" aria-label="DDI do país" aria-invalid="false" data-error="wa-phone-error" class="wa-ddi">
             <input type="tel" id="wa-phone" name="phone" inputmode="numeric" placeholder="DDD + Número (ex: 11999999999)" required pattern="[0-9\s()-]{8,16}" autocomplete="tel-national" aria-describedby="wa-phone-hint" aria-invalid="false" data-error="wa-phone-error">
           </div>
-          <div id="wa-phone-error" class="error-msg">
-            <span role="img" aria-label="Erro">❌</span> Digite o DDD e o número com pelo menos 8 dígitos (ex: 11999999999).
-          </div>
+          <div id="wa-phone-error" class="error-msg">Digite o DDD e o número com pelo menos 8 dígitos (ex: 11999999999).</div>
           <div class="wa-connect-actions">
-            <button type="submit" id="wa-pair-btn" class="primary">📲 Gerar Código de 8 Dígitos</button>
-            <button type="button" id="wa-qr-btn" class="secondary">📷 Conectar via QR Code</button>
+            <button type="submit" id="wa-pair-btn" class="primary">Gerar código de 8 dígitos</button>
+            <button type="button" id="wa-qr-btn" class="secondary">Usar QR Code</button>
           </div>
         </form>
 
         <div id="wa-code-box" class="wa-code-box" hidden>
-          <div class="wa-code-label">SEU CÓDIGO DE CONEXÃO</div>
+          <div class="wa-code-label">CÓDIGO DE CONEXÃO</div>
           <div id="wa-code-value" class="wa-code-value">---- ----</div>
           <div class="wa-code-actions">
-            <button type="button" id="wa-copy-code" class="pack-btn">📋 Copiar Código</button>
-            <a href="whatsapp://" class="nav-link secondary">💬 Abrir WhatsApp</a>
+            <button type="button" id="wa-copy-code" class="pack-btn">Copiar código</button>
+            <a href="whatsapp://" class="nav-link secondary">Abrir WhatsApp</a>
           </div>
-          <p class="help">No WhatsApp: <strong>Ajustes → Dispositivos conectados → Conectar dispositivo → Conectar com número de telefone</strong> e cole o código acima.</p>
+          <p class="help">No WhatsApp: <strong>Ajustes → Dispositivos conectados → Conectar dispositivo → Conectar com número de telefone</strong> e informe o código acima.</p>
         </div>
 
         <div id="wa-qr-box" class="wa-qr-box" hidden>
@@ -85,38 +85,31 @@
           <p class="help">No WhatsApp: <strong>Ajustes → Dispositivos conectados → Conectar dispositivo</strong> e aponte a câmera.</p>
         </div>
       </div>
+    </section>
 
-      <details id="wa-server-details" class="web-note">
-        <summary>⚙️ Servidor Pulso (necessário para enviar direto pelo GitHub Pages)</summary>
-        <p>Como o GitHub Pages é estático, a ponte de envio pro WhatsApp roda no <code>server/</code> (no seu PC via <code>iniciar_servidor.bat</code> ou na nuvem via Render/Railway com <code>Dockerfile</code>). Cole a URL do servidor abaixo:</p>
-        <div class="wa-server-row">
-          <input type="url" id="wa-server-url" placeholder="https://seu-servidor.up.railway.app ou http://localhost:8787" autocomplete="url">
-          <button type="button" id="wa-server-save" class="secondary">Conectar Servidor</button>
-        </div>
-      </details>
-    </section>
     <section id="acoes-fila" class="batch-actions global-batch" hidden aria-label="Processamento da fila">
-      <div><strong>Fila de figurinhas</strong><p class="muted help">Prepare todas as figurinhas da fila automaticamente e baixe seus arquivos.</p></div>
-      <button type="button" id="enviar-fila" class="primary">✨ Preparar fila</button>
+      <div><strong>Fila de figurinhas</strong><p class="muted help">Prepare todas as figurinhas da fila em sequência.</p></div>
+      <button type="button" id="enviar-fila" class="primary">Preparar fila</button>
     </section>
+
     <div class="workspace">
       <section class="card settings" aria-label="Etapas do editor">
         <nav class="steps" aria-label="Etapas">
           <button type="button" data-step="1" aria-current="step">1. Vídeo</button>
           <button type="button" data-step="2">2. Corte</button>
           <button type="button" data-step="3">3. Som</button>
-          <button type="button" data-step="4">4. HD</button>
-          <button type="button" data-step="5">5. Enviar</button>
+          <button type="button" data-step="4">4. Qualidade</button>
+          <button type="button" data-step="5">5. Exportar</button>
         </nav>
         <section class="step" id="etapa-1" aria-labelledby="arquivo-titulo">
           <h2 id="arquivo-titulo">Arquivo</h2>
           <label class="drop" id="soltar" for="arquivo">
             <span class="drop-icon" id="icone-arquivo" aria-hidden="true"></span>
-            <strong>Escolher vídeo ou imagem</strong><span>abra a Galeria, Arquivos ou arraste aqui</span>
+            <strong>Escolher vídeo ou imagem</strong><span>abra a galeria, arquivos ou arraste aqui</span>
             <span class="picker">Escolher arquivos</span>
           </label>
           <input id="arquivo" type="file" accept="video/*,image/*,.mov,.mkv,.apng" multiple>
-          <p class="muted help">Até 64 MiB por arquivo (até 15 na fila). Tudo roda direto no seu aparelho.</p>
+          <p class="muted help">Até 64 MiB por arquivo (até 15 na fila). Tudo roda localmente no seu aparelho.</p>
           <div class="queue-head"><h3>Fila</h3><span id="total-fila">0 de 15</span></div>
           <ul id="fila" class="queue" aria-label="Arquivos na fila"></ul>
           <p id="arquivo-info" class="muted"></p>
@@ -131,7 +124,7 @@
           <label class="field">Zoom <output id="zoom-valor">1,00×</output><input id="zoom" type="range" min="1" max="4" step="0.05" value="1"></label>
           <button type="button" class="flat" id="foco">Usar foco sugerido</button>
           <p class="muted help">Em Cortar, arraste a prévia do resultado ou use as setas com a prévia em foco.</p>
-          <p class="callout">O quadro da figurinha tem 512 × 512 px. No celular, o conteúdo parece maior quando ocupa o quadro inteiro.</p>
+          <p class="callout">O quadro da figurinha tem 512 × 512 px. No celular, o conteúdo fica mais legível quando preenche o quadro.</p>
         </section>
         <section class="step" id="etapa-3" hidden aria-labelledby="audio-titulo">
           <h2 id="audio-titulo">Áudio</h2>
@@ -167,11 +160,12 @@
           <label class="field">Nome do pacote <input id="pacote" type="text" maxlength="128" placeholder="Opcional" autocomplete="off"></label>
           <label class="field">Autor <input id="autor" type="text" maxlength="128" placeholder="Opcional" autocomplete="off"></label>
           <select id="destino" hidden><option value="salvar">Só salvar</option></select>
-          <button type="button" id="enviar" class="primary block-button">🔊 Enviar Figurinha com Som pro WhatsApp</button>
+          <button type="button" id="enviar" class="primary block-button">Baixar figurinha e áudio</button>
           <div class="row wrap exports">
-            <button type="button" class="secondary" id="baixar-webp">⬇ Baixar Figurinha (.webp)</button>
-            <button type="button" class="secondary" id="baixar-ogg">⬇ Baixar Áudio</button>
+            <button type="button" class="secondary" id="baixar-webp">Baixar WebP</button>
+            <button type="button" class="secondary" id="baixar-ogg">Baixar áudio</button>
           </div>
+          <p class="muted help" id="web-export-hint">Para enviar com som direto no WhatsApp sem baixar arquivos, use o app para <a href="https://github.com/dafert/pulso-ios/releases/download/v1.0.0/Pulso-Android.apk">Android (.apk)</a> ou <a href="https://github.com/dafert/pulso-ios/releases/download/v1.0.0/Pulso-iOS.ipa">iOS (.ipa)</a>.</p>
         </section>
         <footer class="step-controls"><button type="button" class="flat" id="voltar">Voltar</button><button type="button" id="proximo" class="secondary">Próximo</button></footer>
       </section>

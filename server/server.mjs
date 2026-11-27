@@ -353,7 +353,7 @@ setInterval(() => {
 const app = express();
 app.use(express.json({ limit: "25mb" }));
 
-// CORS for GitHub Pages (https://dafert.github.io) and local testing
+// CORS for static web frontends and local usage
 app.use((req, res, next) => {
   res.setHeader("Access-Control-Allow-Origin", "*");
   res.setHeader("Access-Control-Allow-Methods", "GET, POST, OPTIONS");
@@ -365,7 +365,6 @@ app.use((req, res, next) => {
 app.get("/api/health", (_req, res) => {
   res.json({
     ok: true,
-    version: "0.9.9",
     ffmpeg: Boolean(ffmpegPath),
     browser: findBrowserExecutable() || "playwright-chromium",
     activeSessions: sessions.size,
@@ -603,6 +602,6 @@ if (fs.existsSync(STATIC_APP_DIR)) {
 }
 
 app.listen(PORT, "0.0.0.0", () => {
-  console.log(`Pulso Server v0.9.9 ativo em http://localhost:${PORT}`);
+  console.log(`Pulso Server ativo em http://localhost:${PORT}`);
   console.log(`Browser: ${findBrowserExecutable() || "playwright-chromium"} | ffmpeg: ${ffmpegPath ? "OK" : "AUSENTE"}`);
 });

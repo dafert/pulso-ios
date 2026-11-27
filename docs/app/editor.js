@@ -1679,10 +1679,10 @@
     const pending = jobs.filter(batchEligible).length;
     const uncertain = jobs.filter((job) => job.deliveryUncertain).length;
     if (window.__PULSO_WEB__) {
-      el["enviar-fila"].textContent = pending ? `✨ Preparar e baixar fila · ${pending}` : "Fila concluída";
-      if (el["baixar-ogg"]) el["baixar-ogg"].textContent = active?.audio?.ext === "wav" ? "⬇ Baixar Áudio (.wav)" : "⬇ Baixar Áudio (.ogg)";
+      el["enviar-fila"].textContent = pending ? `Preparar e baixar fila · ${pending}` : "Fila concluída";
+      if (el["baixar-ogg"]) el["baixar-ogg"].textContent = active?.audio?.ext === "wav" ? "Baixar áudio (.wav)" : "Baixar áudio (.ogg)";
     } else {
-      el["enviar-fila"].textContent = pending ? `🔊 Enviar fila com som · ${pending}` : uncertain ? `Confira ${uncertain} no WhatsApp` : "Fila enviada";
+      el["enviar-fila"].textContent = pending ? `Enviar fila · ${pending}` : uncertain ? `Confira ${uncertain} no WhatsApp` : "Fila enviada";
     }
     el.resultado.dataset.drag = ready && active.options.mode === "cortar";
   }
@@ -2308,7 +2308,7 @@
       await prepareForSend(job, signal);
       signal.throwIfAborted();
       if (srv.connected && typeof window.__pulsoSendViaServer === "function") {
-        progress("Enviando figurinha com som pro seu WhatsApp…", 0.94);
+        progress("Enviando figurinha com som…", 0.94);
         const resp = await window.__pulsoSendViaServer({
           webpBase64: toBase64(job.result.bytes),
           audioBase64: job.audio ? toBase64(job.audio.bytes) : null,
@@ -2324,12 +2324,31 @@
         job.deliveryUncertain = false;
         job.batchError = "";
         refreshQueue();
-        status(resp.detail || "🔊 Figurinha com som enviada para sua conversa 'Você' no WhatsApp!");
+        status(resp.detail || "Figurinha enviada para a conversa 'Você' no WhatsApp.");
         return;
       }
-      const card = document.getElementById("wa-connect-card");
-      if (card) card.scrollIntoView({ behavior: "smooth", block: "start" });
-      throw new Error("Conecte seu WhatsApp no painel 'Conectar seu WhatsApp' no topo da página para enviar com som (ou use os botões Baixar abaixo).");
+      // No GitHub Pages / Cloudflare Pages: baixa (ou compartilha) WebP + áudio diretamente
+      const baseName = job.file.name.replace(/\.[^.]+$/, "");
+      const shareList = [new File([job.result.bytes], baseName + ".webp", { type: "image/webp" })];
+      if (job.audio) {
+        const ext = job.audio.ext || "ogg";
+        shareList.push(new File([job.audio.bytes], baseName + "." + ext, { type: ext === "wav" ? "audio/wav" : "audio/ogg" }));
+      }
+      let shared = false;
+      if (typeof window.__pulsoShareFiles === "function") {
+        try { shared = await window.__pulsoShareFiles(shareList, baseName); } catch {}
+      }
+      if (!shared) {
+        download(job.result.url, "webp");
+        if (job.audio) download(job.audio.url, job.audio.ext || "ogg");
+      }
+      job.sentResult = job.result;
+      job.delivered = true;
+      job.deliveryUncertain = false;
+      job.batchError = "";
+      refreshQueue();
+      status(job.audio ? "Figurinha (.webp) e áudio baixados." : "Figurinha (.webp) baixada.");
+      return;
     }
     if (!job.result) {
       await prepare(job, signal);

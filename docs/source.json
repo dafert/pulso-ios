@@ -1,52 +1,28 @@
 {
-  "name": "Pulso iOS",
+  "name": "Pulso",
   "identifier": "app.pulso.source",
-  "subtitle": "Figurinhas com som para WhatsApp no iPhone",
-  "description": "Fonte oficial para instalar e atualizar o Pulso no SideStore ou AltStore.",
-  "iconURL": "https://dafert.github.io/pulso-ios/icon.png",
-  "website": "https://dafert.github.io/pulso-ios/",
+  "subtitle": "Figurinhas com som para WhatsApp",
+  "description": "Fonte para instalar e atualizar o Pulso no SideStore ou AltStore.",
+  "iconURL": "https://pulso-extrefad.pages.dev/icon.png",
+  "website": "https://pulso-extrefad.pages.dev/",
   "tintColor": "#6137a4",
   "apps": [
     {
       "name": "Pulso",
       "bundleIdentifier": "app.pulso.ios",
-      "developerName": "Pulso",
-      "subtitle": "Crie figurinhas com som direto no iPhone.",
-      "localizedDescription": "Cria figurinhas animadas WebP com áudio Ogg/Opus sincronizado e envia direto para o WhatsApp Web no modo computador dentro do app.",
-      "iconURL": "https://dafert.github.io/pulso-ios/icon.png",
+      "developerName": "extrefad",
+      "subtitle": "Crie e envie figurinhas com som no WhatsApp.",
+      "localizedDescription": "Converte vídeos em figurinhas animadas WebP com áudio Ogg/Opus sincronizado e envia direto para o WhatsApp.",
+      "iconURL": "https://pulso-extrefad.pages.dev/icon.png",
       "tintColor": "#6137a4",
       "category": "utilities",
       "versions": [
         {
           "version": "1.0.0",
           "date": "2026-11-27T10:25:00-03:00",
-          "localizedDescription": "Versão 1.0.0 Open Source por extrefad: qualidade de vídeo HD aprimorada (até 20 fps / 512px, Opus 64kbps), interface simplificada e suporte Android/iOS/Web.",
+          "localizedDescription": "Melhoria na qualidade de vídeo (até 20 fps em 512px) e áudio Opus, interface simplificada e pareamento nativo por número de telefone.",
           "downloadURL": "https://github.com/dafert/pulso-ios/releases/download/v1.0.0/Pulso-iOS.ipa",
-          "size": 690000,
-          "minOSVersion": "15.0"
-        },
-        {
-          "version": "0.9.9",
-          "date": "2026-11-26T13:50:00-03:00",
-          "localizedDescription": "100% Figurinhas com Som: tela nativa para conectar pelo número de telefone (sem QR Code) + keepalive em segundo plano no mesmo iPhone.",
-          "downloadURL": "https://github.com/dafert/pulso-ios/releases/download/v0.9.9/Pulso-iOS.ipa",
-          "size": 685000,
-          "minOSVersion": "15.0"
-        },
-        {
-          "version": "0.9.8",
-          "date": "2026-11-26T13:35:00-03:00",
-          "localizedDescription": "Novo envio direto como Pacote pro WhatsApp (igual Sticker.ly, sem login) + login com número de telefone corrigido no app para figurinhas com som.",
-          "downloadURL": "https://github.com/dafert/pulso-ios/releases/download/v0.9.8/Pulso-iOS.ipa",
-          "size": 660000,
-          "minOSVersion": "15.0"
-        },
-        {
-          "version": "0.9.7",
-          "date": "2026-11-26T10:17:00-03:00",
-          "localizedDescription": "Primeira versão iOS com áudio Opus nativo, WebP WASM e sincronia exata.",
-          "downloadURL": "https://github.com/dafert/pulso-ios/releases/download/v0.9.7/Pulso-iOS.ipa",
-          "size": 651739,
+          "size": 685095,
           "minOSVersion": "15.0"
         }
       ],

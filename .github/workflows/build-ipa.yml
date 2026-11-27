@@ -52,7 +52,7 @@ jobs:
           GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
         run: |
           if ! gh release view v1.0.0 >/dev/null 2>&1; then
-            gh release create v1.0.0 --title "Pulso v1.0.0 (Android + iOS + Web)" --notes "Versão 1.0.0 Open Source por extrefad: qualidade de vídeo HD aprimorada (até 20 fps / 512px), interface simplificada, Android (.apk), iOS (.ipa) e Web App."
+            gh release create v1.0.0 --title "Pulso" --notes "Builds Android (.apk) e iOS (.ipa)."
           fi
           gh release upload v1.0.0 Pulso-iOS.ipa --clobber
 

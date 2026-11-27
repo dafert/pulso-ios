@@ -1,13 +1,10 @@
 $ErrorActionPreference = 'Stop'
-$srvDir = 'C:\Users\E-COMMERCE\.gemini\antigravity\scratch\pulso-ios\server'
+$srvDir = $PSScriptRoot
 Set-Location $srvDir
 
-Write-Host "==========================================================" -ForegroundColor Cyan
-Write-Host "  PULSO WEB SERVER (100% GRATIS - FIGURINHAS COM SOM)" -ForegroundColor Yellow
-Write-Host "==========================================================" -ForegroundColor Cyan
-Write-Host ""
+Write-Host "Pulso Server" -ForegroundColor Cyan
 
-# 1. Iniciar servidor Node em segundo plano se porta 8787 nao estiver aberta
+# Inicia o servidor Node em segundo plano se a porta 8787 nao estiver ativa
 $portBusy = $false
 try {
     $h = Invoke-RestMethod -Uri 'http://127.0.0.1:8787/api/health' -TimeoutSec 2
@@ -15,7 +12,7 @@ try {
 } catch {}
 
 if (-not $portBusy) {
-    Write-Host "[1/2] Iniciando servidor Pulso na porta 8787..." -ForegroundColor Cyan
+    Write-Host "[1/2] Iniciando servidor na porta 8787..." -ForegroundColor Cyan
     Start-Process -FilePath 'node' -ArgumentList 'server.mjs' -WorkingDirectory $srvDir -WindowStyle Minimized
     for ($i = 0; $i -lt 20; $i++) {
         Start-Sleep -Milliseconds 400
@@ -25,16 +22,15 @@ if (-not $portBusy) {
         } catch {}
     }
 }
-Write-Host "  OK Servidor local rodando em http://localhost:8787" -ForegroundColor Green
+Write-Host "Servidor local ativo em http://localhost:8787" -ForegroundColor Green
 
 $cf = Join-Path $srvDir 'cloudflared.exe'
 if (-not (Test-Path $cf)) {
-    Write-Host "[ERRO] cloudflared.exe nao encontrado em $cf" -ForegroundColor Red
-    pause
-    exit 1
+    Write-Host "cloudflared.exe nao encontrado em $cf. Para acesso local, abra http://localhost:8787." -ForegroundColor Yellow
+    exit 0
 }
 
-Write-Host "[2/2] Abrindo tunel HTTPS gratuito na Cloudflare..." -ForegroundColor Cyan
+Write-Host "[2/2] Abrindo tunel HTTPS..." -ForegroundColor Cyan
 $logFile = Join-Path $srvDir 'tunnel.log'
 if (Test-Path $logFile) { Remove-Item $logFile -Force }
 
@@ -54,20 +50,13 @@ for ($i = 0; $i -lt 40; $i++) {
 
 Write-Host ""
 if ($publicUrl) {
-    Write-Host "==========================================================" -ForegroundColor Green
-    Write-Host "  SITE NO AR 100% GRATIS! ABRA NO SAFARI DO SEU IPHONE:" -ForegroundColor Green
-    Write-Host ""
-    Write-Host "  Link Direto (mais rapido):" -ForegroundColor White
-    Write-Host "  $publicUrl" -ForegroundColor Yellow
-    Write-Host ""
-    Write-Host "  Link via GitHub Pages ja conectado:" -ForegroundColor White
-    Write-Host "  https://dafert.github.io/pulso-ios/app/?server=$publicUrl" -ForegroundColor Cyan
-    Write-Host ""
-    Write-Host "  Deixe esta janela aberta enquanto estiver usando." -ForegroundColor Gray
-    Write-Host "==========================================================" -ForegroundColor Green
-    try { Set-Clipboard -Value $publicUrl; Write-Host "  (Link copiado para a area de transferencia!)" -ForegroundColor Gray } catch {}
+    Write-Host "Acesso remoto ativo:" -ForegroundColor Green
+    Write-Host "  Direto: $publicUrl" -ForegroundColor Yellow
+    Write-Host "  Via site: https://pulso-extrefad.pages.dev/app/?server=$publicUrl" -ForegroundColor Cyan
+    Write-Host "Mantenha esta janela aberta enquanto utilizar o tunel." -ForegroundColor Gray
+    try { Set-Clipboard -Value $publicUrl } catch {}
 } else {
-    Write-Host "[AVISO] Tunel demorou para retornar URL. Veja $logFile" -ForegroundColor Yellow
+    Write-Host "Tunel demorou para retornar URL. Consulte $logFile" -ForegroundColor Yellow
 }
 
 $proc.WaitForExit()

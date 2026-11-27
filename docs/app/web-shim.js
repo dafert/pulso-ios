@@ -1,7 +1,6 @@
 (function () {
   window.__PULSO_WEB__ = true;
 
-  // --- Session ID & Server URL ---
   function getOrCreateSessionId() {
     var key = "pulso_wa_session_id";
     var id = "";
@@ -20,6 +19,11 @@
     return s;
   }
 
+  function isStaticHost(host) {
+    var h = String(host || "").toLowerCase();
+    return h.endsWith(".github.io") || h.endsWith(".pages.dev");
+  }
+
   function detectInitialServerUrl() {
     try {
       var params = new URLSearchParams(location.search);
@@ -29,34 +33,26 @@
         return fromQuery;
       }
     } catch (e) {}
-    // If served directly from pulso-server (not github.io), same-origin IS the server!
-    if (location.hostname !== "dafert.github.io" && !location.hostname.endsWith(".github.io") && /^https?:$/i.test(location.protocol)) {
+
+    if (!isStaticHost(location.hostname) && /^https?:$/i.test(location.protocol)) {
       return location.origin;
     }
+
     try {
-      return normalizeServerUrl(localStorage.getItem("pulso_server_url") || "");
-    } catch (e) {
-      return "";
-    }
+      var saved = normalizeServerUrl(localStorage.getItem("pulso_server_url") || "");
+      if (saved && !isStaticHost(new URL(saved).hostname)) return saved;
+    } catch (e) {}
+    return "";
   }
 
   var SESSION_ID = getOrCreateSessionId();
   var serverUrl = detectInitialServerUrl();
+  var serverReachable = false;
   var waConnected = false;
   var pollTimer = null;
 
-  function setServerUrl(url) {
-    serverUrl = normalizeServerUrl(url);
-    try {
-      if (serverUrl) localStorage.setItem("pulso_server_url", serverUrl);
-      else localStorage.removeItem("pulso_server_url");
-    } catch (e) {}
-  }
-
   async function apiCall(path, method, body) {
-    if (!serverUrl) {
-      throw new Error("Configure a URL do Servidor Pulso acima (ou abra direto pelo servidor) para conectar o WhatsApp.");
-    }
+    if (!serverUrl) throw new Error("Modo local ativo.");
     var opts = {
       method: method || "GET",
       headers: { "Content-Type": "application/json", "X-Pulso-Session": SESSION_ID }
@@ -64,24 +60,23 @@
     if (body) opts.body = JSON.stringify(Object.assign({ sessionId: SESSION_ID }, body));
     var url = serverUrl + path + (method === "GET" ? (path.indexOf("?") >= 0 ? "&" : "?") + "sessionId=" + encodeURIComponent(SESSION_ID) : "");
     var resp = await fetch(url, opts);
-    var data = await resp.json().catch(function () { return { ok: false, detail: "Resposta inválida do servidor." }; });
+    var data = await resp.json().catch(function () { return { ok: false, detail: "Resposta inválida." }; });
     if (!resp.ok && data.ok !== false) data.ok = false;
     return data;
   }
 
   window.__pulsoServerState = function () {
-    return { serverUrl: serverUrl, connected: waConnected, sessionId: SESSION_ID };
+    return { serverUrl: serverReachable ? serverUrl : "", connected: waConnected, sessionId: SESSION_ID };
   };
 
   window.__pulsoSendViaServer = async function (payload) {
     var data = await apiCall("/api/sticker/send", "POST", payload);
     if (!data || !data.ok) {
-      throw new Error((data && data.detail) || "Não foi possível enviar a figurinha pelo servidor.");
+      throw new Error((data && data.detail) || "Não foi possível enviar a figurinha.");
     }
     return data;
   };
 
-  // Safe localStorage-backed chrome.storage.local polyfill
   window.chrome = window.chrome || {};
   window.chrome.storage = {
     local: {
@@ -107,10 +102,10 @@
   window.chrome.runtime = {
     sendMessage: async function (msg) {
       if (msg && msg.what === "status") {
-        if (!serverUrl) {
+        if (!serverUrl || !serverReachable) {
           return {
             level: "parcial",
-            detail: "Modo local ativo · Conecte o Servidor Pulso acima para logar seu WhatsApp e enviar figurinhas com som."
+            detail: "Editor pronto no navegador. Crie e baixe sua figurinha com áudio."
           };
         }
         try {
@@ -118,18 +113,18 @@
           waConnected = Boolean(st && st.loggedIn && st.compatible);
           updateConnectCard(st);
           if (waConnected) {
-            return { level: "compativel", detail: "WhatsApp conectado! Pronto para enviar figurinhas com som." };
+            return { level: "compativel", detail: "WhatsApp conectado. Pronto para enviar figurinhas com som." };
           }
-          return { level: "incompativel", detail: (st && st.detail) || "Conecte seu WhatsApp no painel acima para enviar com som." };
+          return { level: "incompativel", detail: (st && st.detail) || "Conecte seu WhatsApp acima para enviar direto." };
         } catch (err) {
-          return { level: "incompativel", detail: "Servidor Pulso offline ou inacessível (" + serverUrl + ")." };
+          return { level: "parcial", detail: "Editor pronto no navegador. Crie e baixe sua figurinha com áudio." };
         }
       }
       return { ok: false, detail: "Ação não suportada." };
     }
   };
 
-  // 16-bit PCM WAV fallback for Safari iOS 17/18 (server converts WAV -> Ogg/Opus via ffmpeg!)
+  // Fallback PCM 16-bit WAV para navegadores sem AudioEncoder Opus (ex.: Safari)
   window.__pulsoEncodeAudioFallback = function (channels, sampleRate) {
     var rate = sampleRate || 48000;
     var left = channels[0];
@@ -168,8 +163,21 @@
     return true;
   };
 
-  // --- UI wiring for WhatsApp Connection Panel + Accessible Validation + PWA Install ---
+  function syncSendButtonLabel() {
+    var sendBtn = document.getElementById("enviar");
+    var hint = document.getElementById("web-export-hint");
+    if (!sendBtn) return;
+    if (serverReachable && waConnected) {
+      sendBtn.textContent = "Enviar para o WhatsApp";
+      if (hint) hint.hidden = true;
+    } else {
+      sendBtn.textContent = "Baixar figurinha e áudio";
+      if (hint) hint.hidden = false;
+    }
+  }
+
   function updateConnectCard(st) {
+    var card = document.getElementById("wa-connect-card");
     var badge = document.getElementById("wa-badge");
     var msg = document.getElementById("wa-connect-msg");
     var formsArea = document.getElementById("wa-login-forms");
@@ -177,28 +185,30 @@
     var codeBox = document.getElementById("wa-code-box");
     var codeVal = document.getElementById("wa-code-value");
     var qrBox = document.getElementById("wa-qr-box");
-    if (!badge) return;
+    if (!badge || !card) return;
 
-    if (!serverUrl) {
-      badge.textContent = "⚙️ Servidor não configurado";
-      badge.dataset.state = "idle";
-      if (formsArea) formsArea.hidden = false;
-      if (logoutBtn) logoutBtn.hidden = true;
+    if (!serverUrl || !serverReachable) {
+      card.hidden = true;
+      waConnected = false;
+      syncSendButtonLabel();
       return;
     }
 
+    card.hidden = false;
+
     if (st && st.loggedIn) {
       waConnected = true;
-      badge.textContent = st.compatible ? "🟢 WhatsApp Conectado" : "🟡 Carregando conversas…";
+      badge.textContent = st.compatible ? "WhatsApp conectado" : "Carregando conversas…";
       badge.dataset.state = st.compatible ? "connected" : "pending";
       if (msg) msg.textContent = st.compatible
-        ? "Conectado! Escolha seus vídeos abaixo e envie figurinhas com som direto pro seu WhatsApp."
-        : "WhatsApp conectado! Finalizando carregamento dos módulos…";
+        ? "Conectado. Selecione um vídeo abaixo para enviar direto para o WhatsApp."
+        : "Finalizando carregamento do WhatsApp…";
       if (formsArea) formsArea.hidden = true;
       if (codeBox) codeBox.hidden = true;
       if (qrBox) qrBox.hidden = true;
       if (logoutBtn) logoutBtn.hidden = false;
       if (st.compatible) stopPolling();
+      syncSendButtonLabel();
       if (typeof window.__pulsoRefreshStatus === "function") window.__pulsoRefreshStatus();
       return;
     }
@@ -208,17 +218,18 @@
     if (logoutBtn) logoutBtn.hidden = true;
 
     if (st && st.pairingCode) {
-      badge.textContent = "🟡 Aguardando código no celular";
+      badge.textContent = "Aguardando código no celular";
       badge.dataset.state = "pending";
       if (codeBox) codeBox.hidden = false;
       if (codeVal) codeVal.textContent = st.pairingCode;
       if (qrBox) qrBox.hidden = true;
-      if (msg) msg.textContent = st.detail || "Cole o código no WhatsApp do seu celular.";
+      if (msg) msg.textContent = st.detail || "Informe o código no WhatsApp do seu celular.";
     } else {
-      badge.textContent = "⚪ WhatsApp Desconectado";
+      badge.textContent = "Desconectado";
       badge.dataset.state = "idle";
       if (st && st.detail && msg) msg.textContent = st.detail;
     }
+    syncSendButtonLabel();
   }
 
   function stopPolling() {
@@ -228,7 +239,7 @@
   function startPolling() {
     stopPolling();
     pollTimer = setInterval(async function () {
-      if (!serverUrl) { stopPolling(); return; }
+      if (!serverUrl || !serverReachable) { stopPolling(); return; }
       try {
         var st = await apiCall("/api/session/status", "GET");
         updateConnectCard(st);
@@ -236,7 +247,6 @@
     }, 2800);
   }
 
-  // Accessible :user-invalid + ARIA synchronization (validate-input-after-interaction)
   function initAccessibleValidation(form) {
     if (!form) return;
     var announcer = document.createElement("div");
@@ -294,9 +304,6 @@
       navigator.serviceWorker.register("./sw.js").catch(function () {});
     }
 
-    var serverInput = document.getElementById("wa-server-url");
-    var serverSaveBtn = document.getElementById("wa-server-save");
-    var serverDetails = document.getElementById("wa-server-details");
     var phoneForm = document.getElementById("wa-phone-form");
     var ddiInput = document.getElementById("wa-ddi");
     var phoneInput = document.getElementById("wa-phone");
@@ -311,39 +318,12 @@
     var codeVal = document.getElementById("wa-code-value");
 
     initAccessibleValidation(phoneForm);
-
-    if (serverInput) serverInput.value = serverUrl;
-    if (serverDetails && !serverUrl) serverDetails.open = true;
+    syncSendButtonLabel();
 
     try {
       var savedPhone = localStorage.getItem("pulso_web_last_phone");
       if (savedPhone && phoneInput) phoneInput.value = savedPhone;
     } catch (e) {}
-
-    if (serverSaveBtn) {
-      serverSaveBtn.addEventListener("click", async function () {
-        setServerUrl(serverInput ? serverInput.value : "");
-        if (!serverUrl) {
-          if (msg) msg.textContent = "URL do servidor limpa. Usando modo local (apenas baixar arquivos).";
-          updateConnectCard(null);
-          return;
-        }
-        if (msg) msg.textContent = "Testando conexão com " + serverUrl + "…";
-        try {
-          var h = await fetch(serverUrl + "/api/health").then(function (r) { return r.json(); });
-          if (h && h.ok) {
-            if (msg) msg.textContent = "✅ Servidor Pulso online! Agora conecte seu WhatsApp abaixo.";
-            if (serverDetails) serverDetails.open = false;
-            var st = await apiCall("/api/session/status", "GET");
-            updateConnectCard(st);
-          } else {
-            if (msg) msg.textContent = "❌ Servidor não respondeu corretamente.";
-          }
-        } catch (err) {
-          if (msg) msg.textContent = "❌ Não foi possível alcançar " + serverUrl + ". Verifique se o servidor está rodando.";
-        }
-      });
-    }
 
     if (phoneForm) {
       phoneForm.addEventListener("submit", async function (e) {
@@ -358,7 +338,7 @@
 
         pairBtn.setAttribute("aria-disabled", "true");
         if (qrBox) qrBox.hidden = true;
-        if (msg) msg.textContent = "Conectando ao WhatsApp e gerando código de 8 dígitos (pode levar ~10s na 1ª vez)…";
+        if (msg) msg.textContent = "Solicitando código de 8 dígitos…";
         try {
           var res = await apiCall("/api/session/pair-phone", "POST", { ddi: ddi, phone: phone });
           if (res.ok && res.loggedIn) {
@@ -367,10 +347,10 @@
             updateConnectCard({ loggedIn: false, pairingCode: res.code, detail: res.detail });
             startPolling();
           } else {
-            if (msg) msg.textContent = "❌ " + (res.detail || "Não foi possível gerar o código.");
+            if (msg) msg.textContent = res.detail || "Não foi possível gerar o código.";
           }
         } catch (err) {
-          if (msg) msg.textContent = "❌ " + (err.message || "Erro ao comunicar com o servidor.");
+          if (msg) msg.textContent = err.message || "Erro ao comunicar com o servidor.";
         } finally {
           pairBtn.removeAttribute("aria-disabled");
         }
@@ -381,7 +361,7 @@
       qrBtn.addEventListener("click", async function () {
         qrBtn.setAttribute("aria-disabled", "true");
         if (codeBox) codeBox.hidden = true;
-        if (msg) msg.textContent = "Carregando QR Code do WhatsApp (pode levar ~10s na 1ª vez)…";
+        if (msg) msg.textContent = "Carregando QR Code…";
         try {
           var res = await apiCall("/api/session/qr", "POST", {});
           if (res.ok && res.loggedIn) {
@@ -389,13 +369,13 @@
           } else if (res.ok && res.qrDataUrl) {
             if (qrImg) qrImg.src = res.qrDataUrl;
             if (qrBox) qrBox.hidden = false;
-            if (msg) msg.textContent = "Escaneie o QR Code no WhatsApp → Dispositivos conectados.";
+            if (msg) msg.textContent = "Escaneie o QR Code em WhatsApp → Dispositivos conectados.";
             startPolling();
           } else {
-            if (msg) msg.textContent = "❌ " + (res.detail || "Não foi possível carregar o QR Code.");
+            if (msg) msg.textContent = res.detail || "Não foi possível carregar o QR Code.";
           }
         } catch (err) {
-          if (msg) msg.textContent = "❌ " + (err.message || "Erro ao comunicar com o servidor.");
+          if (msg) msg.textContent = err.message || "Erro ao comunicar com o servidor.";
         } finally {
           qrBtn.removeAttribute("aria-disabled");
         }
@@ -408,7 +388,7 @@
         if (!raw) return;
         try {
           await navigator.clipboard.writeText(raw);
-          if (msg) msg.textContent = "✅ Código " + raw + " copiado! Cole em Dispositivos conectados → Conectar com número.";
+          if (msg) msg.textContent = "Código " + raw + " copiado.";
         } catch (e) {
           prompt("Copie o código:", raw);
         }
@@ -425,12 +405,24 @@
       });
     }
 
-    // Check status on load if server URL is configured
+    // Só exibe o card de envio direto se houver backend Pulso ativo
     if (serverUrl) {
-      apiCall("/api/session/status", "GET").then(updateConnectCard).catch(function () {});
+      fetch(serverUrl + "/api/health")
+        .then(function (r) { return r.ok ? r.json() : null; })
+        .then(function (h) {
+          if (h && h.ok) {
+            serverReachable = true;
+            return apiCall("/api/session/status", "GET").then(updateConnectCard);
+          }
+          serverReachable = false;
+          updateConnectCard(null);
+        })
+        .catch(function () {
+          serverReachable = false;
+          updateConnectCard(null);
+        });
     }
 
-    // Progressive enhancement PWA installation (navigator.install + beforeinstallprompt fallback)
     var installButton = document.getElementById("install-app");
     var installStatus = document.getElementById("install-status");
     if (installButton) {
@@ -450,7 +442,7 @@
         try {
           if (supportsWebInstall) {
             await navigator.install();
-            if (installStatus) installStatus.textContent = "Pulso Web instalado!";
+            if (installStatus) installStatus.textContent = "Pulso instalado.";
             installButton.hidden = true;
           } else if (deferredInstallPrompt) {
             var promptEvent = deferredInstallPrompt;
@@ -459,7 +451,7 @@
             var choice = await promptEvent.userChoice;
             if (installStatus) {
               installStatus.textContent = choice.outcome === "accepted"
-                ? "Pulso Web instalado na tela inicial!"
+                ? "Pulso instalado na tela inicial."
                 : "Instalação cancelada.";
             }
             if (!deferredInstallPrompt) installButton.hidden = true;

@@ -166,7 +166,7 @@ main{padding:12px 12px 14px}
 .queue li button:last-child{grid-column:2;grid-row:1}
 .queue-note{grid-column:1/-1;color:var(--danger);font-size:.76rem;overflow-wrap:anywhere;padding:0 .45rem .2rem}
 
-/* Adaptação mobile para iPhone 11 (toque, sem auto-zoom iOS, layout compacto) */
+/* Ajustes mobile (toque, sem auto-zoom iOS, layout compacto) */
 html,body{overscroll-behavior:contain;-webkit-text-size-adjust:100%}
 body.ios-app{-webkit-tap-highlight-color:transparent;padding-bottom:env(safe-area-inset-bottom,12px)}
 body.ios-app input,body.ios-app select,body.ios-app button{font-size:16px}

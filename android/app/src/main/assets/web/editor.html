@@ -21,19 +21,19 @@
     <div class="integration">
       <p id="compatibilidade" role="status">Verificando o WhatsApp Web…</p>
       <div class="row">
-        <button type="button" id="conectar-wa" class="flat" hidden>📱 Conectar número</button>
+        <button type="button" id="conectar-wa" class="flat" hidden>Conectar número</button>
         <button type="button" id="rever" class="flat">Verificar</button>
       </div>
     </div>
   </header>
   <main id="estudio" tabindex="-1">
     <section class="cover" aria-labelledby="titulo">
-      <div><h1 id="titulo">Figurinha <em>com som</em> em 1 toque.</h1><p>Escolha o vídeo e toque em <strong>Criar Automático</strong> — corte, som e qualidade HD já vão prontos.</p></div>
-      <button type="button" id="automatico" class="auto">✨ Criar Automático (HD)</button>
+      <div><h1 id="titulo">Figurinha <em>com som</em>.</h1><p>Escolha um vídeo ou imagem para gerar o WebP animado em 512 × 512 com áudio sincronizado.</p></div>
+      <button type="button" id="automatico" class="auto">Criar automático</button>
     </section>
     <section id="acoes-fila" class="batch-actions global-batch" hidden aria-label="Envio da fila">
-      <div><strong>Envio em sequência</strong><p class="muted help">As figurinhas com som pendentes serão preparadas e enviadas para a sua conversa no WhatsApp.</p></div>
-      <button type="button" id="enviar-fila" class="primary">🔊 Enviar fila com som</button>
+      <div><strong>Envio em sequência</strong><p class="muted help">As figurinhas pendentes serão preparadas e enviadas para a sua conversa no WhatsApp.</p></div>
+      <button type="button" id="enviar-fila" class="primary">Enviar fila</button>
     </section>
     <div class="workspace">
       <section class="card settings" aria-label="Etapas do editor">
@@ -41,7 +41,7 @@
           <button type="button" data-step="1" aria-current="step">1. Vídeo</button>
           <button type="button" data-step="2">2. Corte</button>
           <button type="button" data-step="3">3. Som</button>
-          <button type="button" data-step="4">4. HD</button>
+          <button type="button" data-step="4">4. Qualidade</button>
           <button type="button" data-step="5">5. Enviar</button>
         </nav>
         <section class="step" id="etapa-1" aria-labelledby="arquivo-titulo">
@@ -106,7 +106,7 @@
             <select id="destino"><option value="encaminhar">Salvar na minha conversa + Encaminhar</option><option value="salvar">Só salvar na minha conversa</option></select>
           </label>
           <p class="muted help">Você escolhe os destinatários na janela de encaminhamento do WhatsApp.</p>
-          <button type="button" id="enviar" class="primary block-button">🔊 Enviar Figurinha com Som</button>
+          <button type="button" id="enviar" class="primary block-button">Enviar figurinha com som</button>
           <div class="row wrap exports"><button type="button" class="flat" id="baixar-webp">Baixar WebP</button><button type="button" class="flat" id="baixar-ogg">Baixar Ogg</button></div>
         </section>
         <footer class="step-controls"><button type="button" class="flat" id="voltar">Voltar</button><button type="button" id="proximo" class="secondary">Próximo</button></footer>
