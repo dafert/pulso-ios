@@ -697,7 +697,8 @@
       dispose();
     }
   }
-  var workerDisabled = Boolean(window.__PULSO_IOS__);
+  var isNativeApp = Boolean(window.__PULSO_IOS__ || window.__PULSO_ANDROID__);
+  var workerDisabled = isNativeApp;
   var yieldUi = () => new Promise((resolve) => setTimeout(resolve, 0));
   function makeCanvas(width, height, willReadFrequently = false) {
     if (typeof OffscreenCanvas === "function") {
@@ -1543,13 +1544,22 @@
         }
       }
       progress2("Conferindo o pico do áudio final…", 0.8);
-      const decoded = await offline.decodeAudioData(result.bytes.slice().buffer);
-      signal.throwIfAborted();
-      if (Math.abs(decoded.duration - result.duration) > 4e-3) throw new Error("A duração do áudio codificado não corresponde ao trecho selecionado.");
-      const pcm = Array.from({ length: decoded.numberOfChannels }, (_, index) => decoded.getChannelData(index).slice());
-      const measured = { lufs: loudness(pcm), dbtp: truePeak(pcm) };
-      if (measured.dbtp <= -1) return { ...result, ...measured, safeAudio: lowResourceAudio };
-      attenuation += measured.dbtp + 1.25;
+      try {
+        const decoded = await offline.decodeAudioData(result.bytes.slice().buffer);
+        signal.throwIfAborted();
+        if (Math.abs(decoded.duration - result.duration) > 4e-3) throw new Error("A duração do áudio codificado não corresponde ao trecho selecionado.");
+        const pcm = Array.from({ length: decoded.numberOfChannels }, (_, index) => decoded.getChannelData(index).slice());
+        const measured = { lufs: loudness(pcm), dbtp: truePeak(pcm) };
+        if (measured.dbtp <= -1) return { ...result, ...measured, safeAudio: lowResourceAudio };
+        attenuation += measured.dbtp + 1.25;
+      } catch (decodeErr) {
+        if (signal.aborted) throw decodeErr;
+        const b = result.bytes;
+        if (b && b.length >= 4 && b[0] === 79 && b[1] === 103 && b[2] === 103 && b[3] === 83) {
+          return { ...result, safeAudio: lowResourceAudio };
+        }
+        throw decodeErr;
+      }
     }
     throw new Error("O pico do áudio final passou do limite. Tente outro trecho ou desative a normalização.");
   }
@@ -1558,9 +1568,9 @@
   var by = (id) => document.getElementById(id);
   var el = Object.fromEntries([...document.querySelectorAll("[id]")].map((node) => [node.id, node]));
   var storageKey = "pulso-preferencias";
-  var embedded = Boolean(window.__PULSO_IOS__) || Boolean(window.__PULSO_WEB__) || (window.parent !== window && location.ancestorOrigins?.length === 1 && location.ancestorOrigins[0] === WA_ORIGIN);
+  var embedded = isNativeApp || Boolean(window.__PULSO_WEB__) || (window.parent !== window && location.ancestorOrigins?.length === 1 && location.ancestorOrigins[0] === WA_ORIGIN);
   var tellPanel = (what, reason) => {
-    if (window.__PULSO_IOS__) {
+    if (isNativeApp) {
       if (what === "close" && typeof window.__pulsoClosePanel === "function") window.__pulsoClosePanel();
       return;
     }
@@ -2195,18 +2205,18 @@
       const level = result.level || "incompativel";
       const titles = { compativel: "Compatível", parcial: "Parcial", incompativel: "WhatsApp (som) desconectado" };
       el.compatibilidade.dataset.level = level;
-      if (window.__PULSO_IOS__ && level === "incompativel") {
-        el.compatibilidade.textContent = "WhatsApp desconectado · Toque em '📱 Conectar número' para enviar com som.";
+      if (isNativeApp && level === "incompativel") {
+        el.compatibilidade.textContent = "WhatsApp desconectado · Toque em 'Conectar número' para enviar com som.";
       } else {
         el.compatibilidade.textContent = titles[level] + " · " + result.detail;
       }
-      if (el["conectar-wa"]) el["conectar-wa"].hidden = !(window.__PULSO_IOS__ && level === "incompativel");
+      if (el["conectar-wa"]) el["conectar-wa"].hidden = !(isNativeApp && level === "incompativel");
     } catch (error) {
       el.compatibilidade.dataset.level = "incompativel";
-      el.compatibilidade.textContent = window.__PULSO_IOS__
-        ? "WhatsApp desconectado · Toque em '📱 Conectar número' para enviar com som."
+      el.compatibilidade.textContent = isNativeApp
+        ? "WhatsApp desconectado · Toque em 'Conectar número' para enviar com som."
         : "Incompatível · " + friendly(error);
-      if (el["conectar-wa"]) el["conectar-wa"].hidden = !window.__PULSO_IOS__;
+      if (el["conectar-wa"]) el["conectar-wa"].hidden = !isNativeApp;
     } finally {
       el.rever.disabled = false;
     }
@@ -2306,7 +2316,7 @@
     if (!result?.ok) {
       if (!result || result.detailCode === "incerto") job.deliveryUncertain = true;
       refreshQueue();
-      if (window.__PULSO_IOS__ && result?.level === "incompativel" && typeof window.__pulsoOpenWhatsAppLogin === "function") {
+      if (isNativeApp && result?.level === "incompativel" && typeof window.__pulsoOpenWhatsAppLogin === "function") {
         window.__pulsoOpenWhatsAppLogin(true);
       }
       throw new Error(result?.detail || "O WhatsApp não confirmou o envio.");

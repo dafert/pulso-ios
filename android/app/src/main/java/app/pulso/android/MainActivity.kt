@@ -234,7 +234,11 @@ class MainActivity : AppCompatActivity() {
                     view: WebView,
                     request: WebResourceRequest
                 ): WebResourceResponse? {
-                    return assetLoader.shouldInterceptRequest(request.url)
+                    val resp = assetLoader.shouldInterceptRequest(request.url) ?: return null
+                    val path = request.url.path?.lowercase() ?: ""
+                    if (path.endsWith(".wasm")) resp.mimeType = "application/wasm"
+                    else if (path.endsWith(".js") || path.endsWith(".mjs")) resp.mimeType = "application/javascript"
+                    return resp
                 }
             }
 

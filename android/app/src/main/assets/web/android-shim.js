@@ -44,6 +44,13 @@
     return callNative("openWhatsAppTab", {});
   };
 
+  var opusWasmPromise = null;
+  window.__pulsoEncodeOpusNative = async function (monoFloat32, bitrate) {
+    if (!opusWasmPromise) opusWasmPromise = import("./opus-wasm.js");
+    var mod = await opusWasmPromise;
+    return await mod.encodeOggOpus(monoFloat32, bitrate);
+  };
+
   window.chrome = window.chrome || {};
   window.chrome.storage = {
     local: {
