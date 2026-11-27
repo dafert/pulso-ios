@@ -1,10 +1,10 @@
 {
-  "id": "/pulso-ios/app/",
+  "id": "./",
   "name": "Pulso · Figurinhas com Som",
   "short_name": "Pulso",
   "description": "Crie figurinhas animadas WebP com áudio sincronizado direto no navegador, 100% local e gratuito.",
-  "start_url": "/pulso-ios/app/",
-  "scope": "/pulso-ios/app/",
+  "start_url": "./",
+  "scope": "./",
   "display": "standalone",
   "orientation": "portrait-primary",
   "background_color": "#181320",
