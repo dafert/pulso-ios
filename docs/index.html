@@ -5,20 +5,107 @@
   <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
   <meta name="color-scheme" content="light dark">
   <meta name="theme-color" content="#14101b">
-  <title>Pulso — Figurinhas com som para WhatsApp</title>
-  <meta name="description" content="Crie e envie figurinhas animadas com som sincronizado para WhatsApp no Android, iPhone e navegador.">
+  <title>Pulso — Fazer figurinhas com som para WhatsApp (Web, Android e iPhone)</title>
+  <meta name="description" content="Crie e envie figurinhas animadas com som sincronizado (WebP + Ogg/Opus) para WhatsApp no navegador, Android (.apk), iPhone (Safari ou .ipa) e extensão Chrome/Edge.">
+  <meta name="robots" content="index, follow, max-image-preview:large">
   <meta property="og:type" content="website">
+  <meta property="og:locale" content="pt_BR">
+  <meta property="og:site_name" content="Pulso">
   <meta property="og:url" content="https://pulso-extrefad.pages.dev/">
-  <meta property="og:title" content="Pulso — Figurinhas com som para WhatsApp">
-  <meta property="og:description" content="Converta vídeos em figurinhas animadas WebP com áudio Ogg/Opus sincronizado para WhatsApp no Android, iPhone e navegador.">
+  <meta property="og:title" content="Pulso — Fazer figurinhas com som para WhatsApp">
+  <meta property="og:description" content="Converta vídeos em figurinhas animadas WebP 512 × 512 com áudio Ogg/Opus sincronizado para WhatsApp no navegador, Android e iPhone.">
   <meta property="og:image" content="https://pulso-extrefad.pages.dev/icon.png">
   <meta name="twitter:card" content="summary">
-  <meta name="twitter:title" content="Pulso — Figurinhas com som para WhatsApp">
-  <meta name="twitter:description" content="Converta vídeos em figurinhas animadas WebP com áudio Ogg/Opus sincronizado para WhatsApp.">
+  <meta name="twitter:title" content="Pulso — Fazer figurinhas com som para WhatsApp">
+  <meta name="twitter:description" content="Converta vídeos em figurinhas animadas WebP com áudio Ogg/Opus sincronizado para WhatsApp no navegador, Android e iPhone.">
   <meta name="twitter:image" content="https://pulso-extrefad.pages.dev/icon.png">
   <link rel="canonical" href="https://pulso-extrefad.pages.dev/">
+  <link rel="alternate" hreflang="pt-BR" href="https://pulso-extrefad.pages.dev/">
+  <link rel="alternate" hreflang="x-default" href="https://pulso-extrefad.pages.dev/">
   <link rel="icon" type="image/png" href="icon.png">
   <link rel="apple-touch-icon" href="icon.png">
+  <script type="application/ld+json">
+  {
+    "@context": "https://schema.org",
+    "@graph": [
+      {
+        "@type": "WebSite",
+        "name": "Pulso",
+        "url": "https://pulso-extrefad.pages.dev/",
+        "inLanguage": "pt-BR"
+      },
+      {
+        "@type": "SoftwareApplication",
+        "name": "Pulso — Figurinhas com som para WhatsApp",
+        "alternateName": "Pulso",
+        "description": "Editor e cliente open-source para criar e enviar figurinhas animadas WebP 512 × 512 com áudio Ogg/Opus sincronizado no WhatsApp (Web, Android, iPhone e extensão Chrome/Edge).",
+        "url": "https://pulso-extrefad.pages.dev/",
+        "downloadUrl": "https://github.com/dafert/pulso-ios/releases/latest",
+        "image": "https://pulso-extrefad.pages.dev/icon.png",
+        "applicationCategory": "MultimediaApplication",
+        "operatingSystem": "Web, Android, iOS, Chrome, Edge",
+        "softwareVersion": "1.0.0",
+        "inLanguage": "pt-BR",
+        "license": "https://pulso-extrefad.pages.dev/LICENSE.md",
+        "author": {
+          "@type": "Person",
+          "name": "extrefad",
+          "url": "https://github.com/dafert/pulso-ios"
+        },
+        "offers": {
+          "@type": "Offer",
+          "price": "0",
+          "priceCurrency": "BRL"
+        }
+      },
+      {
+        "@type": "FAQPage",
+        "mainEntity": [
+          {
+            "@type": "Question",
+            "name": "Como fazer figurinha com som para WhatsApp pelo celular ou PC?",
+            "acceptedAnswer": {
+              "@type": "Answer",
+              "text": "Abra o Editor Web do Pulso (ou o app no Android/iPhone), selecione qualquer vídeo MP4, MOV ou GIF, toque em Criar automático para gerar o WebP animado em 512 × 512 com áudio Ogg/Opus sincronizado e conecte seu WhatsApp por código de 8 dígitos ou QR Code para enviar direto para a conversa."
+            }
+          },
+          {
+            "@type": "Question",
+            "name": "Como fazer figurinha com som no iPhone sem instalar aplicativo?",
+            "acceptedAnswer": {
+              "@type": "Answer",
+              "text": "Acesse a página dedicada para iPhone no Safari em pulso-extrefad.pages.dev/iphone/, conecte seu WhatsApp usando o código de 8 dígitos e abra o Editor para escolher vídeos da Fototeca e enviar com áudio, sem precisar de computador nem de arquivo .ipa."
+            }
+          },
+          {
+            "@type": "Question",
+            "name": "Precisa criar conta ou pagar assinatura para usar o Pulso?",
+            "acceptedAnswer": {
+              "@type": "Answer",
+              "text": "Não precisa criar conta nem pagar assinatura. O Pulso é um projeto open-source sem anúncios, distribuído sob a licença PolyForm Noncommercial 1.0.0."
+            }
+          },
+          {
+            "@type": "Question",
+            "name": "Meus vídeos e áudios são enviados para algum servidor para conversão?",
+            "acceptedAnswer": {
+              "@type": "Answer",
+              "text": "Não. A conversão de vídeo para WebP animado e a codificação do áudio em Ogg/Opus 48 kHz acontecem localmente no seu navegador ou aparelho usando WebAssembly."
+            }
+          },
+          {
+            "@type": "Question",
+            "name": "Como enviar direto para uma aba aberta do WhatsApp Web no PC?",
+            "acceptedAnswer": {
+              "@type": "Answer",
+              "text": "No Chrome, Edge ou Brave, baixe a extensão Pulso (.zip), carregue em chrome://extensions com o Modo do desenvolvedor ativado e abra o Editor Web. O envio passa a ir direto para a sua aba aberta do WhatsApp Web em um clique."
+            }
+          }
+        ]
+      }
+    ]
+  }
+  </script>
   <style>
     :root {
       color-scheme: light dark;
@@ -225,7 +312,8 @@
 
     details.guide { background: var(--field); border: 1px solid var(--rule); border-radius: 14px; padding: 13px 15px; margin-top: 10px; }
     details.guide summary { cursor: pointer; font-weight: 750; font-size: .93rem; }
-    details.guide h4 { margin: 12px 0 4px; font-size: .86rem; color: var(--ink); }
+    details.guide h3 { margin: 12px 0 4px; font-size: .86rem; color: var(--ink); }
+    details.guide p { margin: 8px 0 0; color: var(--sub); font-size: .87rem; }
     details.guide ol { margin: 6px 0 0; padding-left: 18px; color: var(--sub); font-size: .87rem; }
     details.guide li { margin: 4px 0; }
     details.guide code { font-size: .82rem; color: var(--accent); }
@@ -294,12 +382,14 @@
         <a href="app/">Editor Web</a>
         <a href="iphone/">iPhone (sem app)</a>
         <a href="#tutorial">Como instalar</a>
+        <a href="#faq">Dúvidas</a>
         <a href="#doacao">Apoiar</a>
         <a href="#licenca">Licença</a>
         <a href="https://github.com/dafert/pulso-ios" target="_blank" rel="noopener">GitHub</a>
       </nav>
     </header>
 
+    <main>
     <section class="hero">
       <div>
         <span class="pill">Pulso · por extrefad</span>
@@ -403,7 +493,7 @@
 
       <details class="guide" open>
         <summary>iPhone — Como instalar e usar o aplicativo (.ipa)</summary>
-        <h4>Opção 1: Pelo computador (Windows ou Mac) usando Sideloadly</h4>
+        <h3>Opção 1: Pelo computador (Windows ou Mac) usando Sideloadly</h3>
         <ol>
           <li>Baixe o arquivo <code>Pulso-iOS.ipa</code> no botão acima e instale o <a href="https://sideloadly.io" target="_blank" rel="noopener">Sideloadly</a> no computador.</li>
           <li>Conecte o iPhone ao computador pelo cabo USB e toque em <strong>Confiar</strong> na tela do aparelho.</li>
@@ -412,7 +502,7 @@
           <li>Se o iOS pedir, ative também <strong>Ajustes → Privacidade e Segurança → Modo de Desenvolvedor</strong>.</li>
           <li>Abra o <strong>Pulso</strong>, vá na aba <strong>Conectar WhatsApp</strong>, informe seu número para gerar o código de 8 dígitos e cole em <strong>WhatsApp → Dispositivos conectados → Conectar com número de telefone</strong>.</li>
         </ol>
-        <h4>Opção 2: Direto no iPhone usando SideStore ou AltStore</h4>
+        <h3>Opção 2: Direto no iPhone usando SideStore ou AltStore</h3>
         <ol>
           <li>Se você já utiliza SideStore ou AltStore, toque em <strong>Adicionar no SideStore</strong> no topo da página (ou adicione a fonte <code>https://pulso-extrefad.pages.dev/source.json</code>).</li>
           <li>Instale o Pulso pela lista de apps e conecte seu WhatsApp na aba <strong>Conectar</strong>.</li>
@@ -434,6 +524,30 @@
           <li>Abra o <a href="app/">Editor Web</a>, conecte seu WhatsApp Web pelo número (código de 8 dígitos) ou QR Code e envie direto pelo navegador.</li>
           <li>Se você usa o WhatsApp Web aberto em outra aba no computador (Chrome, Edge ou Brave), baixe a <a href="https://github.com/dafert/pulso-ios/releases/download/v1.0.0/Pulso-Extensao-Chrome.zip">Extensão Pulso (.zip)</a>, extraia a pasta e carregue em <code>chrome://extensions</code> (ative <strong>Modo do desenvolvedor → Carregar sem compactação</strong>). O Editor Web passa a enviar direto para sua aba aberta em um clique.</li>
         </ol>
+      </details>
+    </section>
+
+    <section class="section" id="faq" aria-labelledby="faq-title">
+      <h2 id="faq-title">Perguntas frequentes</h2>
+      <details class="guide" name="faq">
+        <summary>Como fazer figurinha com som para WhatsApp pelo celular ou PC?</summary>
+        <p>Abra o <a href="app/">Editor Web</a> do Pulso (ou o app no Android/iPhone), selecione qualquer vídeo MP4, MOV ou GIF, toque em <strong>Criar automático</strong> para gerar o WebP animado em 512 × 512 com áudio Ogg/Opus sincronizado e conecte seu WhatsApp por código de 8 dígitos ou QR Code para enviar direto para a conversa.</p>
+      </details>
+      <details class="guide" name="faq">
+        <summary>Como fazer figurinha com som no iPhone sem instalar aplicativo?</summary>
+        <p>Acesse a página dedicada para iPhone no Safari em <a href="iphone/">pulso-extrefad.pages.dev/iphone/</a>, conecte seu WhatsApp usando o código de 8 dígitos e abra o Editor para escolher vídeos da Fototeca e enviar com áudio, sem precisar de computador nem de arquivo <code>.ipa</code>.</p>
+      </details>
+      <details class="guide" name="faq">
+        <summary>Precisa criar conta ou pagar assinatura para usar o Pulso?</summary>
+        <p>Não precisa criar conta nem pagar assinatura. O Pulso é um projeto open-source sem anúncios, distribuído sob a licença PolyForm Noncommercial 1.0.0.</p>
+      </details>
+      <details class="guide" name="faq">
+        <summary>Meus vídeos e áudios são enviados para algum servidor para conversão?</summary>
+        <p>Não. A conversão de vídeo para WebP animado e a codificação do áudio em Ogg/Opus 48 kHz acontecem localmente no seu navegador ou aparelho usando WebAssembly.</p>
+      </details>
+      <details class="guide" name="faq">
+        <summary>Como enviar direto para uma aba aberta do WhatsApp Web no PC?</summary>
+        <p>No Chrome, Edge ou Brave, baixe a extensão Pulso (<code>.zip</code>), carregue em <code>chrome://extensions</code> com o Modo do desenvolvedor ativado e abra o Editor Web. O envio passa a ir direto para a sua aba aberta do WhatsApp Web em um clique.</p>
       </details>
     </section>
 
@@ -490,6 +604,7 @@
         <li><strong>Privacidade:</strong> O processamento de vídeo e áudio acontece localmente no dispositivo. Projeto independente sem afiliação com WhatsApp LLC ou Meta Platforms, Inc.</li>
       </ul>
     </section>
+    </main>
 
     <footer>
       Pulso · extrefad · <a href="https://github.com/dafert/pulso-ios" target="_blank" rel="noopener">GitHub</a>
