@@ -222,20 +222,40 @@
 
     /* Donation Card */
     .donate-box {
+      container-type: inline-size;
       background: linear-gradient(135deg, color-mix(in srgb, var(--accent) 12%, var(--field)), color-mix(in srgb, var(--good) 10%, var(--field)));
-      border: 1px solid var(--rule); border-radius: 18px; padding: 18px; margin-top: 10px;
+      border: 1px solid var(--rule); border-radius: 18px; padding: 18px; margin-top: 12px;
+      display: grid; gap: 12px;
     }
-    .wallet-row { display: flex; gap: 8px; flex-wrap: wrap; align-items: center; margin-top: 10px; }
+    .wallet-item {
+      background: var(--card); border: 1px solid var(--rule); border-radius: 14px;
+      padding: 13px 14px; display: grid; gap: 8px;
+    }
+    .wallet-head { display: flex; flex-wrap: wrap; align-items: center; justify-content: space-between; gap: 6px; }
+    .wallet-badge {
+      display: inline-flex; align-items: center; gap: 6px;
+      font-size: .84rem; font-weight: 800; color: var(--ink);
+    }
+    .wallet-net {
+      font-size: .74rem; font-weight: 700; padding: 3px 9px; border-radius: 999px;
+      background: color-mix(in srgb, var(--accent) 16%, transparent); color: var(--accent);
+    }
+    .wallet-row { display: flex; gap: 8px; align-items: center; }
     .wallet-code {
-      flex: 1; min-width: 220px; background: var(--card); border: 1px solid var(--rule);
-      border-radius: 12px; padding: 10px 12px; font-family: ui-monospace, SFMono-Regular, Menlo, monospace;
-      font-size: .86rem; word-break: break-all; color: var(--ink);
+      flex: 1; min-width: 0; background: var(--field); border: 1px solid var(--rule);
+      border-radius: 10px; padding: 10px 12px; font-family: ui-monospace, SFMono-Regular, Menlo, monospace;
+      font-size: .84rem; word-break: break-all; color: var(--ink); user-select: all;
     }
     .copy-btn {
-      background: var(--accent); color: #fff; border: 0; border-radius: 12px;
-      padding: 10px 16px; font-weight: 750; font-size: .88rem; cursor: pointer; min-height: 44px;
+      background: var(--accent); color: #fff; border: 0; border-radius: 10px;
+      padding: 10px 14px; font-weight: 750; font-size: .84rem; cursor: pointer;
+      min-height: 44px; white-space: nowrap;
     }
-    .copy-msg { font-size: .82rem; color: var(--good); min-height: 1.2em; margin-top: 6px; font-weight: 600; }
+    .wallet-warn { margin: 0; font-size: .76rem; color: var(--sub); }
+    .copy-msg { font-size: .82rem; color: var(--good); min-height: 1.2em; font-weight: 700; }
+    @container (max-width: 480px) {
+      .wallet-row { flex-direction: column; align-items: stretch; }
+    }
 
     /* Legal & Footer */
     .legal { font-size: .84rem; color: var(--sub); }
@@ -263,7 +283,7 @@
       <nav class="navlinks" aria-label="Navegação">
         <a href="app/">App Web</a>
         <a href="#tutorial">Tutorial</a>
-        <a href="#doacao">Apoiar (USDT)</a>
+        <a href="#doacao">Apoiar</a>
         <a href="#direitos">Direitos</a>
         <a href="https://github.com/dafert/pulso-ios" target="_blank" rel="noopener">GitHub</a>
       </nav>
@@ -398,15 +418,46 @@
     </section>
 
     <section class="section" id="doacao">
-      <h2>💛 Apoie o Projeto (Doação Voluntária em USDT)</h2>
+      <h2>💛 Apoie o Projeto (Doação Voluntária em Cripto)</h2>
       <p style="margin:0;color:var(--sub);font-size:.92rem;">O Pulso é mantido de forma <strong>100% gratuita, sem anúncios e de código aberto</strong> por <strong>extrefad</strong>. Se o projeto te ajudou, qualquer doação voluntária ajuda a manter as atualizações e melhorias!</p>
       <div class="donate-box">
-        <strong style="font-size:.92rem;">Carteira USDT (rede TRC-20 / BEP-20 / ERC-20 — confirme a rede antes de enviar):</strong>
-        <div class="wallet-row">
-          <div class="wallet-code" id="usdt-wallet">EM_BREVE_CARTEIRA_USDT_EXTREFAD</div>
-          <button type="button" class="copy-btn" id="copy-wallet">📋 Copiar Carteira USDT</button>
+        <div class="wallet-item">
+          <div class="wallet-head">
+            <span class="wallet-badge">🔵 USDC</span>
+            <span class="wallet-net">Rede Solana (SOL)</span>
+          </div>
+          <div class="wallet-row">
+            <div class="wallet-code">D8UNtn8VyMRjFGZcQiXM8EWnhuNcfbqz4Bv6ZV8CnCpA</div>
+            <button type="button" class="copy-btn" data-copy="D8UNtn8VyMRjFGZcQiXM8EWnhuNcfbqz4Bv6ZV8CnCpA" data-label="USDC (Solana)">📋 Copiar USDC</button>
+          </div>
+          <p class="wallet-warn">⚠️ Envie <strong>apenas USDC nativo na rede Solana</strong>. Não use outras redes.</p>
         </div>
-        <div class="copy-msg" id="copy-msg" role="status"></div>
+
+        <div class="wallet-item">
+          <div class="wallet-head">
+            <span class="wallet-badge">🟠 Bitcoin (BTC)</span>
+            <span class="wallet-net">Rede Bitcoin</span>
+          </div>
+          <div class="wallet-row">
+            <div class="wallet-code">39XSR2S184prA1CAKAJnn35qP4actcU1FB</div>
+            <button type="button" class="copy-btn" data-copy="39XSR2S184prA1CAKAJnn35qP4actcU1FB" data-label="BTC (Bitcoin)">📋 Copiar BTC</button>
+          </div>
+          <p class="wallet-warn">⚠️ Envie <strong>apenas BTC na rede Bitcoin</strong> (não envie Bitcoin Cash / BCH).</p>
+        </div>
+
+        <div class="wallet-item">
+          <div class="wallet-head">
+            <span class="wallet-badge">🟣 Ethereum (ETH)</span>
+            <span class="wallet-net">Rede Ethereum (Mainnet)</span>
+          </div>
+          <div class="wallet-row">
+            <div class="wallet-code">0x5B557AD0A8ee7FA9779080931f228c07439a4C08</div>
+            <button type="button" class="copy-btn" data-copy="0x5B557AD0A8ee7FA9779080931f228c07439a4C08" data-label="ETH (Ethereum)">📋 Copiar ETH</button>
+          </div>
+          <p class="wallet-warn">⚠️ Envie <strong>apenas ETH na rede Ethereum</strong> (não envie tokens ERC-20, WETH ou NFTs).</p>
+        </div>
+
+        <div class="copy-msg" id="copy-msg" role="status" aria-live="polite"></div>
       </div>
     </section>
 
@@ -461,20 +512,19 @@
       }
       startLoop();
 
-      var copyBtn = document.getElementById("copy-wallet");
-      var walletEl = document.getElementById("usdt-wallet");
       var msgEl = document.getElementById("copy-msg");
-      if (copyBtn && walletEl) {
-        copyBtn.addEventListener("click", async function () {
-          var val = (walletEl.textContent || "").trim();
+      document.querySelectorAll("[data-copy]").forEach(function (btn) {
+        btn.addEventListener("click", async function () {
+          var val = btn.getAttribute("data-copy") || "";
+          var label = btn.getAttribute("data-label") || "carteira";
           try {
             await navigator.clipboard.writeText(val);
-            msgEl.textContent = "✅ Endereço USDT copiado!";
+            if (msgEl) msgEl.textContent = "✅ Endereço " + label + " copiado!";
           } catch (e) {
-            prompt("Copie o endereço USDT:", val);
+            prompt("Copie o endereço " + label + ":", val);
           }
         });
-      }
+      });
     })();
   </script>
 </body>
