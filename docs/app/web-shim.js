@@ -1,16 +1,8 @@
 (function () {
   window.__PULSO_WEB__ = true;
 
-  function getOrCreateSessionId() {
-    var key = "pulso_wa_session_id";
-    var id = "";
-    try { id = localStorage.getItem(key) || ""; } catch (e) {}
-    if (!/^[a-zA-Z0-9_-]{12,64}$/.test(id)) {
-      id = (crypto && crypto.randomUUID) ? crypto.randomUUID() : ("ps-" + Date.now() + "-" + Math.random().toString(36).slice(2, 12));
-      try { localStorage.setItem(key, id); } catch (e) {}
-    }
-    return id;
-  }
+  var DEFAULT_CLOUD_API = "https://pulso-api.daviddaguerdegodoy.workers.dev";
+  var EXT_CHANNEL = "pulso-ext-bridge-v1";
 
   function normalizeServerUrl(raw) {
     var s = String(raw || "").trim().replace(/\/+$/, "");
@@ -19,57 +11,132 @@
     return s;
   }
 
-  function isStaticHost(host) {
-    var h = String(host || "").toLowerCase();
-    return h.endsWith(".pages.dev");
-  }
-
-  function detectInitialServerUrl() {
+  function detectApiUrl() {
     try {
       var params = new URLSearchParams(location.search);
       var fromQuery = normalizeServerUrl(params.get("server") || "");
-      if (fromQuery) {
-        localStorage.setItem("pulso_server_url", fromQuery);
-        return fromQuery;
-      }
+      if (fromQuery) return fromQuery;
     } catch (e) {}
-
-    if (!isStaticHost(location.hostname) && /^https?:$/i.test(location.protocol)) {
+    if ((location.hostname === "localhost" || location.hostname === "127.0.0.1") && location.port) {
       return location.origin;
     }
-
-    try {
-      var saved = normalizeServerUrl(localStorage.getItem("pulso_server_url") || "");
-      if (saved && !isStaticHost(new URL(saved).hostname)) return saved;
-    } catch (e) {}
-    return "";
+    return DEFAULT_CLOUD_API;
   }
 
-  var SESSION_ID = getOrCreateSessionId();
-  var serverUrl = detectInitialServerUrl();
-  var serverReachable = false;
+  function loadSessionId() {
+    try { return localStorage.getItem("pulso_cf_session_id") || ""; } catch (e) { return ""; }
+  }
+  function saveSessionId(id) {
+    sessionId = String(id || "").trim();
+    try {
+      if (sessionId) localStorage.setItem("pulso_cf_session_id", sessionId);
+      else localStorage.removeItem("pulso_cf_session_id");
+    } catch (e) {}
+  }
+
+  var apiUrl = detectApiUrl();
+  var sessionId = loadSessionId();
   var waConnected = false;
   var pollTimer = null;
 
+  // --- Ponte com a Extensão Pulso (conecta direto na aba aberta do WhatsApp Web) ---
+  var extAvailable = false;
+  var extConnected = false;
+  var extPending = new Map();
+
+  function extRequest(what, payload, timeoutMs) {
+    return new Promise(function (resolve, reject) {
+      var id = "ext-" + Date.now() + "-" + Math.random().toString(36).slice(2, 9);
+      var timer = setTimeout(function () {
+        extPending.delete(id);
+        reject(new Error("Tempo esgotado na comunicação com a aba do WhatsApp Web."));
+      }, timeoutMs || 8000);
+      extPending.set(id, { resolve: resolve, reject: reject, timer: timer });
+      window.postMessage({ channel: EXT_CHANNEL, direction: "request", id: id, what: what, payload: payload }, location.origin);
+    });
+  }
+
+  window.addEventListener("message", function (event) {
+    if (event.source !== window || event.origin !== location.origin) return;
+    var d = event.data;
+    if (!d || d.channel !== EXT_CHANNEL) return;
+    if (d.direction === "event" && d.type === "ready") {
+      extAvailable = true;
+      checkExtStatus();
+      return;
+    }
+    if (d.direction === "response" && extPending.has(d.id)) {
+      var p = extPending.get(d.id);
+      extPending.delete(d.id);
+      clearTimeout(p.timer);
+      p.resolve(d.result);
+    }
+  });
+
+  async function checkExtStatus() {
+    if (!extAvailable) return false;
+    try {
+      var st = await extRequest("status", null, 4500);
+      extConnected = Boolean(st && (st.level === "compativel" || st.level === "parcial"));
+      updateConnectCard({
+        viaExtension: true,
+        loggedIn: extConnected,
+        compatible: extConnected,
+        noTab: Boolean(st && st.noTab),
+        detail: (st && st.detail) || (extConnected ? "Conectado à sua aba aberta do WhatsApp Web." : "Abra o WhatsApp Web em uma aba para enviar direto.")
+      });
+      return extConnected;
+    } catch (e) {
+      extConnected = false;
+      return false;
+    }
+  }
+
   async function apiCall(path, method, body) {
-    if (!serverUrl) throw new Error("Modo local ativo.");
-    var opts = {
-      method: method || "GET",
-      headers: { "Content-Type": "application/json", "X-Pulso-Session": SESSION_ID }
-    };
-    if (body) opts.body = JSON.stringify(Object.assign({ sessionId: SESSION_ID }, body));
-    var url = serverUrl + path + (method === "GET" ? (path.indexOf("?") >= 0 ? "&" : "?") + "sessionId=" + encodeURIComponent(SESSION_ID) : "");
+    var headers = { "Content-Type": "application/json" };
+    if (sessionId) headers["X-Pulso-Session"] = sessionId;
+    var opts = { method: method || "GET", headers: headers };
+    if (body !== undefined) {
+      opts.body = JSON.stringify(Object.assign(sessionId ? { sessionId: sessionId } : {}, body));
+    }
+    var url = apiUrl + path;
+    if ((method || "GET") === "GET" && sessionId) {
+      url += (path.indexOf("?") >= 0 ? "&" : "?") + "sessionId=" + encodeURIComponent(sessionId);
+    }
     var resp = await fetch(url, opts);
-    var data = await resp.json().catch(function () { return { ok: false, detail: "Resposta inválida." }; });
+    var data = await resp.json().catch(function () { return { ok: false, detail: "Resposta inválida do servidor." }; });
+    if (data && data.sessionId) saveSessionId(data.sessionId);
     if (!resp.ok && data.ok !== false) data.ok = false;
     return data;
   }
 
   window.__pulsoServerState = function () {
-    return { serverUrl: serverReachable ? serverUrl : "", connected: waConnected, sessionId: SESSION_ID };
+    return {
+      serverUrl: apiUrl,
+      connected: extConnected || waConnected,
+      viaExtension: extConnected,
+      sessionId: sessionId
+    };
   };
 
   window.__pulsoSendViaServer = async function (payload) {
+    if (extAvailable) {
+      var extOk = await checkExtStatus();
+      if (extOk) {
+        var extRes = await extRequest("send", {
+          webp: payload.webpBase64,
+          ogg: payload.audioBase64 || null,
+          duration: payload.duration || 0,
+          animated: Boolean(payload.animated),
+          side: payload.side || 512,
+          forward: Boolean(payload.forward)
+        }, 125000);
+        if (!extRes || !extRes.ok) {
+          throw new Error((extRes && extRes.detail) || "Não foi possível enviar para a aba do WhatsApp Web.");
+        }
+        return extRes;
+      }
+    }
     var data = await apiCall("/api/sticker/send", "POST", payload);
     if (!data || !data.ok) {
       throw new Error((data && data.detail) || "Não foi possível enviar a figurinha.");
@@ -102,29 +169,32 @@
   window.chrome.runtime = {
     sendMessage: async function (msg) {
       if (msg && msg.what === "status") {
-        if (!serverUrl || !serverReachable) {
-          return {
-            level: "parcial",
-            detail: "Editor pronto no navegador. Crie e baixe sua figurinha com áudio."
-          };
-        }
-        try {
-          var st = await apiCall("/api/session/status", "GET");
-          waConnected = Boolean(st && st.loggedIn && st.compatible);
-          updateConnectCard(st);
-          if (waConnected) {
-            return { level: "compativel", detail: "WhatsApp conectado. Pronto para enviar figurinhas com som." };
+        if (extAvailable) {
+          var ok = await checkExtStatus();
+          if (ok) {
+            return { level: "compativel", detail: "WhatsApp Web conectado pela aba aberta." };
           }
-          return { level: "incompativel", detail: (st && st.detail) || "Conecte seu WhatsApp acima para enviar direto." };
-        } catch (err) {
-          return { level: "parcial", detail: "Editor pronto no navegador. Crie e baixe sua figurinha com áudio." };
         }
+        if (sessionId) {
+          try {
+            var st = await apiCall("/api/session/status", "GET");
+            waConnected = Boolean(st && st.loggedIn && st.compatible);
+            updateConnectCard(st);
+            if (waConnected) {
+              return { level: "compativel", detail: "WhatsApp Web conectado. Pronto para enviar com som." };
+            }
+          } catch (e) {}
+        }
+        return {
+          level: "parcial",
+          detail: "Editor pronto. Conecte seu WhatsApp Web abaixo para enviar direto ou baixe a figurinha."
+        };
       }
       return { ok: false, detail: "Ação não suportada." };
     }
   };
 
-  // Fallback PCM 16-bit WAV para navegadores sem AudioEncoder Opus (ex.: Safari)
+  // Fallback PCM 16-bit WAV para navegadores sem AudioEncoder Opus
   window.__pulsoEncodeAudioFallback = function (channels, sampleRate) {
     var rate = sampleRate || 48000;
     var left = channels[0];
@@ -163,59 +233,67 @@
     return true;
   };
 
-  function syncSendButtonLabel() {
+  function syncSendButtons() {
     var sendBtn = document.getElementById("enviar");
+    var quickSend = document.getElementById("enviar-rapido");
     var hint = document.getElementById("web-export-hint");
-    if (!sendBtn) return;
-    if (serverReachable && waConnected) {
-      sendBtn.textContent = "Enviar para o WhatsApp";
-      if (hint) hint.hidden = true;
-    } else {
-      sendBtn.textContent = "Baixar figurinha e áudio";
-      if (hint) hint.hidden = false;
+    var connected = extConnected || waConnected;
+    if (sendBtn) {
+      sendBtn.textContent = connected ? "Enviar para o WhatsApp Web" : "Baixar figurinha e áudio";
     }
+    if (quickSend) quickSend.hidden = !connected;
+    if (hint) hint.hidden = connected;
   }
 
   function updateConnectCard(st) {
-    var card = document.getElementById("wa-connect-card");
     var badge = document.getElementById("wa-badge");
     var msg = document.getElementById("wa-connect-msg");
     var formsArea = document.getElementById("wa-login-forms");
     var logoutBtn = document.getElementById("wa-logout-btn");
+    var openTabBtn = document.getElementById("wa-open-tab-btn");
+    var extTip = document.getElementById("wa-ext-tip");
     var codeBox = document.getElementById("wa-code-box");
     var codeVal = document.getElementById("wa-code-value");
     var qrBox = document.getElementById("wa-qr-box");
-    if (!badge || !card) return;
+    if (!badge) return;
 
-    if (!serverUrl || !serverReachable) {
-      card.hidden = true;
-      waConnected = false;
-      syncSendButtonLabel();
+    if (extAvailable && extTip) extTip.hidden = true;
+    if (openTabBtn) openTabBtn.hidden = !extAvailable;
+
+    if (st && st.viaExtension && st.loggedIn) {
+      extConnected = true;
+      badge.textContent = "WhatsApp Web conectado (aba aberta)";
+      badge.dataset.state = "connected";
+      if (msg) msg.textContent = "Aba do WhatsApp Web detectada. Escolha um vídeo abaixo e clique em Enviar para o WhatsApp Web.";
+      if (formsArea) formsArea.hidden = true;
+      if (codeBox) codeBox.hidden = true;
+      if (qrBox) qrBox.hidden = true;
+      if (logoutBtn) logoutBtn.hidden = true;
+      stopPolling();
+      syncSendButtons();
       return;
     }
 
-    card.hidden = false;
-
-    if (st && st.loggedIn) {
+    if (st && !st.viaExtension && st.loggedIn) {
       waConnected = true;
-      badge.textContent = st.compatible ? "WhatsApp conectado" : "Carregando conversas…";
+      badge.textContent = st.compatible ? "WhatsApp Web conectado" : "Carregando conversas…";
       badge.dataset.state = st.compatible ? "connected" : "pending";
       if (msg) msg.textContent = st.compatible
-        ? "Conectado. Selecione um vídeo abaixo para enviar direto para o WhatsApp."
-        : "Finalizando carregamento do WhatsApp…";
+        ? "Conectado. Escolha um vídeo abaixo e clique em Enviar para o WhatsApp Web."
+        : "Finalizando carregamento das conversas…";
       if (formsArea) formsArea.hidden = true;
       if (codeBox) codeBox.hidden = true;
       if (qrBox) qrBox.hidden = true;
       if (logoutBtn) logoutBtn.hidden = false;
       if (st.compatible) stopPolling();
-      syncSendButtonLabel();
+      syncSendButtons();
       if (typeof window.__pulsoRefreshStatus === "function") window.__pulsoRefreshStatus();
       return;
     }
 
-    waConnected = false;
+    if (!st || !st.viaExtension) waConnected = false;
     if (formsArea) formsArea.hidden = false;
-    if (logoutBtn) logoutBtn.hidden = true;
+    if (logoutBtn) logoutBtn.hidden = !sessionId;
 
     if (st && st.pairingCode) {
       badge.textContent = "Aguardando código no celular";
@@ -225,11 +303,11 @@
       if (qrBox) qrBox.hidden = true;
       if (msg) msg.textContent = st.detail || "Informe o código no WhatsApp do seu celular.";
     } else {
-      badge.textContent = "Desconectado";
+      badge.textContent = extAvailable ? "Abra o WhatsApp Web ou conecte abaixo" : "Desconectado";
       badge.dataset.state = "idle";
       if (st && st.detail && msg) msg.textContent = st.detail;
     }
-    syncSendButtonLabel();
+    syncSendButtons();
   }
 
   function stopPolling() {
@@ -239,12 +317,16 @@
   function startPolling() {
     stopPolling();
     pollTimer = setInterval(async function () {
-      if (!serverUrl || !serverReachable) { stopPolling(); return; }
+      if (!sessionId) { stopPolling(); return; }
       try {
         var st = await apiCall("/api/session/status", "GET");
+        if (st && st.state === "idle") {
+          saveSessionId("");
+          stopPolling();
+        }
         updateConnectCard(st);
       } catch (e) {}
-    }, 2800);
+    }, 3500);
   }
 
   function initAccessibleValidation(form) {
@@ -311,6 +393,8 @@
     var qrBtn = document.getElementById("wa-qr-btn");
     var copyCodeBtn = document.getElementById("wa-copy-code");
     var logoutBtn = document.getElementById("wa-logout-btn");
+    var openTabBtn = document.getElementById("wa-open-tab-btn");
+    var quickSendBtn = document.getElementById("enviar-rapido");
     var msg = document.getElementById("wa-connect-msg");
     var qrBox = document.getElementById("wa-qr-box");
     var qrImg = document.getElementById("wa-qr-img");
@@ -318,12 +402,36 @@
     var codeVal = document.getElementById("wa-code-value");
 
     initAccessibleValidation(phoneForm);
-    syncSendButtonLabel();
+    syncSendButtons();
+
+    // Ping na extensão Pulso caso esteja instalada no navegador
+    window.postMessage({ channel: EXT_CHANNEL, direction: "request", what: "ping" }, location.origin);
+    document.addEventListener("visibilitychange", function () {
+      if (document.visibilityState === "visible" && extAvailable) checkExtStatus();
+    });
 
     try {
       var savedPhone = localStorage.getItem("pulso_web_last_phone");
       if (savedPhone && phoneInput) phoneInput.value = savedPhone;
     } catch (e) {}
+
+    if (quickSendBtn) {
+      quickSendBtn.addEventListener("click", function () {
+        var sendBtn = document.getElementById("enviar");
+        if (sendBtn && !sendBtn.disabled) sendBtn.click();
+        else {
+          var statusEl = document.getElementById("status");
+          if (statusEl) statusEl.textContent = "Escolha um vídeo primeiro para enviar.";
+        }
+      });
+    }
+
+    if (openTabBtn) {
+      openTabBtn.addEventListener("click", function () {
+        if (extAvailable) extRequest("openWa", null, 4000).catch(function () {});
+        else window.open("https://web.whatsapp.com/", "_blank", "noopener");
+      });
+    }
 
     if (phoneForm) {
       phoneForm.addEventListener("submit", async function (e) {
@@ -338,7 +446,7 @@
 
         pairBtn.setAttribute("aria-disabled", "true");
         if (qrBox) qrBox.hidden = true;
-        if (msg) msg.textContent = "Solicitando código de 8 dígitos…";
+        if (msg) msg.textContent = "Conectando ao WhatsApp Web e gerando código de 8 dígitos…";
         try {
           var res = await apiCall("/api/session/pair-phone", "POST", { ddi: ddi, phone: phone });
           if (res.ok && res.loggedIn) {
@@ -350,7 +458,7 @@
             if (msg) msg.textContent = res.detail || "Não foi possível gerar o código.";
           }
         } catch (err) {
-          if (msg) msg.textContent = err.message || "Erro ao comunicar com o servidor.";
+          if (msg) msg.textContent = err.message || "Erro ao comunicar com o WhatsApp Web.";
         } finally {
           pairBtn.removeAttribute("aria-disabled");
         }
@@ -361,7 +469,7 @@
       qrBtn.addEventListener("click", async function () {
         qrBtn.setAttribute("aria-disabled", "true");
         if (codeBox) codeBox.hidden = true;
-        if (msg) msg.textContent = "Carregando QR Code…";
+        if (msg) msg.textContent = "Carregando QR Code do WhatsApp Web…";
         try {
           var res = await apiCall("/api/session/qr", "POST", {});
           if (res.ok && res.loggedIn) {
@@ -375,7 +483,7 @@
             if (msg) msg.textContent = res.detail || "Não foi possível carregar o QR Code.";
           }
         } catch (err) {
-          if (msg) msg.textContent = err.message || "Erro ao comunicar com o servidor.";
+          if (msg) msg.textContent = err.message || "Erro ao comunicar com o WhatsApp Web.";
         } finally {
           qrBtn.removeAttribute("aria-disabled");
         }
@@ -399,28 +507,21 @@
       logoutBtn.addEventListener("click", async function () {
         stopPolling();
         try { await apiCall("/api/session/logout", "POST", {}); } catch (e) {}
+        saveSessionId("");
         waConnected = false;
         updateConnectCard({ loggedIn: false, detail: "WhatsApp desconectado." });
         if (typeof window.__pulsoRefreshStatus === "function") window.__pulsoRefreshStatus();
       });
     }
 
-    // Só exibe o card de envio direto se houver backend Pulso ativo
-    if (serverUrl) {
-      fetch(serverUrl + "/api/health")
-        .then(function (r) { return r.ok ? r.json() : null; })
-        .then(function (h) {
-          if (h && h.ok) {
-            serverReachable = true;
-            return apiCall("/api/session/status", "GET").then(updateConnectCard);
-          }
-          serverReachable = false;
-          updateConnectCard(null);
+    // Reaproveita sessão já ativa sem gastar cota na abertura da página
+    if (sessionId) {
+      apiCall("/api/session/status", "GET")
+        .then(function (st) {
+          if (st && st.state === "idle") saveSessionId("");
+          updateConnectCard(st);
         })
-        .catch(function () {
-          serverReachable = false;
-          updateConnectCard(null);
-        });
+        .catch(function () {});
     }
 
     var installButton = document.getElementById("install-app");

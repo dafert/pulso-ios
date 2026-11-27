@@ -9,6 +9,13 @@
   <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
   <meta name="apple-mobile-web-app-title" content="Pulso">
   <title>Pulso — Editor de figurinhas com som</title>
+  <meta name="description" content="Editor local de figurinhas animadas WebP com áudio sincronizado para WhatsApp.">
+  <meta property="og:type" content="website">
+  <meta property="og:url" content="https://pulso-extrefad.pages.dev/app/">
+  <meta property="og:title" content="Pulso — Editor de figurinhas com som">
+  <meta property="og:description" content="Crie figurinhas animadas em 512 × 512 com áudio sincronizado direto no navegador.">
+  <meta property="og:image" content="https://pulso-extrefad.pages.dev/icon.png">
+  <link rel="canonical" href="https://pulso-extrefad.pages.dev/app/">
   <link rel="manifest" href="manifest.webmanifest">
   <link rel="icon" type="image/svg+xml" href="icons/pulso.svg">
   <link rel="apple-touch-icon" href="icons/icon-192.png">
@@ -39,19 +46,25 @@
   </header>
   <main id="estudio" tabindex="-1">
     <section class="cover" aria-labelledby="titulo">
-      <div><h1 id="titulo">Figurinha <em>com som</em>.</h1><p>Escolha um vídeo ou imagem para gerar o WebP animado em 512 × 512 com áudio sincronizado.</p></div>
-      <button type="button" id="automatico" class="auto">Criar automático</button>
+      <div><h1 id="titulo">Figurinha <em>com som</em>.</h1><p>Escolha um vídeo ou imagem, conecte seu WhatsApp Web abaixo e envie com áudio sincronizado.</p></div>
+      <div class="row wrap">
+        <button type="button" id="automatico" class="auto">Criar automático</button>
+        <button type="button" id="enviar-rapido" class="primary" hidden>Enviar para o WhatsApp</button>
+      </div>
     </section>
 
-    <section class="card wa-connect-card" id="wa-connect-card" hidden aria-labelledby="wa-connect-title">
+    <section class="card wa-connect-card" id="wa-connect-card" aria-labelledby="wa-connect-title">
       <div class="wa-connect-head">
         <div>
-          <h2 id="wa-connect-title">Conectar WhatsApp</h2>
+          <h2 id="wa-connect-title">Conectar WhatsApp Web</h2>
           <span class="wa-badge" id="wa-badge" data-state="idle">Desconectado</span>
         </div>
-        <button type="button" id="wa-logout-btn" class="flat" hidden>Desconectar</button>
+        <div class="row wrap">
+          <button type="button" id="wa-open-tab-btn" class="secondary" hidden>Abrir WhatsApp Web</button>
+          <button type="button" id="wa-logout-btn" class="flat" hidden>Desconectar</button>
+        </div>
       </div>
-      <p id="wa-connect-msg" class="muted help" role="status">Conecte seu WhatsApp por código de 8 dígitos ou QR Code para enviar direto para a conversa "Você".</p>
+      <p id="wa-connect-msg" class="muted help" role="status">Entre com seu número (código de 8 dígitos) ou QR Code para enviar figurinhas com som direto pelo navegador.</p>
 
       <div id="wa-login-forms">
         <form id="wa-phone-form" class="wa-phone-form" novalidate>
@@ -66,7 +79,7 @@
           <div id="wa-phone-error" class="error-msg">Digite o DDD e o número com pelo menos 8 dígitos (ex: 11999999999).</div>
           <div class="wa-connect-actions">
             <button type="submit" id="wa-pair-btn" class="primary">Gerar código de 8 dígitos</button>
-            <button type="button" id="wa-qr-btn" class="secondary">Usar QR Code</button>
+            <button type="button" id="wa-qr-btn" class="secondary">Conectar via QR Code</button>
           </div>
         </form>
 
@@ -84,6 +97,8 @@
           <img id="wa-qr-img" alt="QR Code do WhatsApp Web" width="240" height="240">
           <p class="help">No WhatsApp: <strong>Ajustes → Dispositivos conectados → Conectar dispositivo</strong> e aponte a câmera.</p>
         </div>
+
+        <p class="muted help" id="wa-ext-tip">Usa WhatsApp Web aberto em outra aba no PC? Instale a <a href="https://github.com/dafert/pulso-ios/releases/download/v1.0.0/Pulso-Extensao-Chrome.zip">Extensão Pulso (.zip)</a> para conectar automaticamente na sua aba aberta.</p>
       </div>
     </section>
 
@@ -190,7 +205,7 @@
         <header class="preview-heading"><h2 id="celular-titulo">No celular</h2></header>
         <div class="phone" data-tone="claro">
           <div class="phone-header"><span class="avatar" aria-hidden="true">V</span><span>Você</span></div>
-          <div class="conversation"><div class="bubble"><canvas id="celular-canvas" width="192" height="192" hidden aria-hidden="true"></canvas><img id="celular-webp" alt="Figurinha na conversa" hidden><span id="celular-vazio">Sua figurinha aparece aqui</span><span class="checks" aria-hidden="true">✓✓</span></div></div>
+          <div class="conversation"><div class="bubble"><button type="button" id="celular-som" class="bubble-sound" hidden aria-label="Ouvir som da figurinha" title="Tocar ou pausar áudio da figurinha">▶ Som</button><canvas id="celular-canvas" width="192" height="192" hidden aria-hidden="true"></canvas><img id="celular-webp" alt="Figurinha na conversa" hidden><span id="celular-vazio">Sua figurinha aparece aqui</span><span class="checks" aria-hidden="true">✓✓</span></div></div>
         </div>
         <div class="phone-controls"><label>Tema da conversa <select id="tema-celular"><option value="auto">Automático</option><option value="claro">Claro</option><option value="escuro">Escuro</option></select></label></div>
         <p class="muted help">A escala pode variar conforme o celular e a versão do WhatsApp.</p>

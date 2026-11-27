@@ -1,4 +1,4 @@
-const CACHE = "pulso-web-v3";
+const CACHE = "pulso-web-v5";
 const CORE = [
   "./",
   "./index.html",

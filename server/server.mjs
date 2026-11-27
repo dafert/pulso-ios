@@ -49,7 +49,15 @@ function findBrowserExecutable() {
 
 function validSessionId(raw) {
   const s = String(raw || "").trim();
-  return /^[a-zA-Z0-9_-]{12,64}$/.test(s) ? s : null;
+  return /^[a-zA-Z0-9_-]{16,64}$/.test(s) ? s : null;
+}
+
+function sessionProfileDir(sessionId) {
+  const dir = path.resolve(SESSIONS_ROOT, sessionId);
+  if (!dir.startsWith(path.resolve(SESSIONS_ROOT) + path.sep)) {
+    throw new Error("Caminho de sessão inválido.");
+  }
+  return dir;
 }
 
 // --- WebP EXIF sound-sha256 updater (for server-converted Ogg/Opus from Safari WAV) ---
@@ -177,8 +185,7 @@ async function closeSession(sessionId, wipeDisk = false) {
     try { await s.context.close(); } catch {}
   }
   if (wipeDisk) {
-    const dir = path.join(SESSIONS_ROOT, sessionId);
-    try { fs.rmSync(dir, { recursive: true, force: true }); } catch {}
+    try { fs.rmSync(sessionProfileDir(sessionId), { recursive: true, force: true }); } catch {}
   }
 }
 
@@ -199,7 +206,7 @@ async function getOrCreateSession(sessionId) {
     return s;
   }
   await evictIfNeeded(sessionId);
-  const profileDir = path.join(SESSIONS_ROOT, sessionId);
+  const profileDir = sessionProfileDir(sessionId);
   fs.mkdirSync(profileDir, { recursive: true });
 
   const executablePath = findBrowserExecutable();
@@ -351,13 +358,72 @@ setInterval(() => {
 
 // --- Express HTTP App ---
 const app = express();
-app.use(express.json({ limit: "25mb" }));
+app.disable("x-powered-by");
+app.use(express.json({ limit: "16mb" }));
 
-// CORS for static web frontends and local usage
+const ALLOWED_ORIGINS = new Set([
+  "https://pulso-extrefad.pages.dev",
+  `http://localhost:${PORT}`,
+  `http://127.0.0.1:${PORT}`,
+  ...(process.env.PULSO_ALLOWED_ORIGINS || "").split(",").map((s) => s.trim()).filter(Boolean),
+]);
+
+function isAllowedOrigin(origin) {
+  if (!origin) return true;
+  if (ALLOWED_ORIGINS.has(origin)) return true;
+  try {
+    const u = new URL(origin);
+    if (u.protocol === "https:" && (u.hostname.endsWith(".pulso-extrefad.pages.dev") || u.hostname.endsWith(".trycloudflare.com"))) {
+      return true;
+    }
+    if ((u.hostname === "localhost" || u.hostname === "127.0.0.1") && u.protocol === "http:") {
+      return true;
+    }
+  } catch {}
+  return false;
+}
+
+// Per-IP sliding-window rate limiter for heavy endpoints
+const rateBuckets = new Map();
+function rateLimit(maxPerMinute) {
+  return (req, res, next) => {
+    const ip = req.ip || req.socket?.remoteAddress || "unknown";
+    const key = `${req.path}:${ip}`;
+    const now = Date.now();
+    const list = (rateBuckets.get(key) || []).filter((ts) => now - ts < 60_000);
+    if (list.length >= maxPerMinute) {
+      return res.status(429).json({ ok: false, detail: "Muitas solicitações. Aguarde um minuto e tente novamente." });
+    }
+    list.push(now);
+    rateBuckets.set(key, list);
+    next();
+  };
+}
+setInterval(() => {
+  const now = Date.now();
+  for (const [k, list] of rateBuckets.entries()) {
+    const fresh = list.filter((ts) => now - ts < 60_000);
+    if (fresh.length) rateBuckets.set(k, fresh);
+    else rateBuckets.delete(k);
+  }
+}, 5 * 60_000).unref();
+
+// Security headers + explicit CORS allowlist
 app.use((req, res, next) => {
-  res.setHeader("Access-Control-Allow-Origin", "*");
-  res.setHeader("Access-Control-Allow-Methods", "GET, POST, OPTIONS");
-  res.setHeader("Access-Control-Allow-Headers", "Content-Type, X-Pulso-Session");
+  res.setHeader("X-Content-Type-Options", "nosniff");
+  res.setHeader("X-Frame-Options", "SAMEORIGIN");
+  res.setHeader("Referrer-Policy", "strict-origin-when-cross-origin");
+  const origin = req.headers.origin;
+  if (origin) {
+    if (!isAllowedOrigin(origin)) {
+      if (req.method === "OPTIONS") return res.sendStatus(403);
+      return res.status(403).json({ ok: false, detail: "Origem não autorizada." });
+    }
+    res.setHeader("Access-Control-Allow-Origin", origin);
+    res.setHeader("Vary", "Origin");
+    res.setHeader("Access-Control-Allow-Methods", "GET, POST, OPTIONS");
+    res.setHeader("Access-Control-Allow-Headers", "Content-Type, X-Pulso-Session");
+  }
   if (req.method === "OPTIONS") return res.sendStatus(204);
   next();
 });
@@ -366,7 +432,6 @@ app.get("/api/health", (_req, res) => {
   res.json({
     ok: true,
     ffmpeg: Boolean(ffmpegPath),
-    browser: findBrowserExecutable() || "playwright-chromium",
     activeSessions: sessions.size,
   });
 });
@@ -376,8 +441,7 @@ app.get("/api/session/status", async (req, res) => {
   if (!sessionId) return res.status(400).json({ ok: false, detail: "sessionId inválido." });
   const existing = sessions.get(sessionId);
   if (!existing) {
-    // Check if there is a persisted profile on disk from a previous run
-    const profileDir = path.join(SESSIONS_ROOT, sessionId);
+    const profileDir = sessionProfileDir(sessionId);
     if (!fs.existsSync(profileDir)) {
       return res.json({ ok: true, state: "idle", loggedIn: false, compatible: false, detail: "WhatsApp desconectado." });
     }
@@ -387,11 +451,12 @@ app.get("/api/session/status", async (req, res) => {
     const st = await runSerialized(s, () => inspectPage(s.page));
     res.json({ ok: true, ...st });
   } catch (err) {
-    res.status(500).json({ ok: false, detail: err.message || "Falha ao consultar sessão." });
+    console.error("[status]", err);
+    res.status(500).json({ ok: false, detail: "Falha ao consultar sessão." });
   }
 });
 
-app.post("/api/session/qr", async (req, res) => {
+app.post("/api/session/qr", rateLimit(15), async (req, res) => {
   const sessionId = validSessionId(req.body?.sessionId || req.headers["x-pulso-session"]);
   if (!sessionId) return res.status(400).json({ ok: false, detail: "sessionId inválido." });
   try {
@@ -429,11 +494,12 @@ app.post("/api/session/qr", async (req, res) => {
     });
     res.json(out);
   } catch (err) {
-    res.status(500).json({ ok: false, detail: err.message || "Falha ao obter QR Code." });
+    console.error("[qr]", err);
+    res.status(500).json({ ok: false, detail: "Falha ao obter QR Code." });
   }
 });
 
-app.post("/api/session/pair-phone", async (req, res) => {
+app.post("/api/session/pair-phone", rateLimit(12), async (req, res) => {
   const sessionId = validSessionId(req.body?.sessionId || req.headers["x-pulso-session"]);
   if (!sessionId) return res.status(400).json({ ok: false, detail: "sessionId inválido." });
   const ddi = String(req.body?.ddi || "55").replace(/\D/g, "");
@@ -529,29 +595,41 @@ app.post("/api/session/pair-phone", async (req, res) => {
     });
     res.json(out);
   } catch (err) {
-    res.status(500).json({ ok: false, detail: err.message || "Falha ao solicitar código no WhatsApp." });
+    console.error("[pair-phone]", err);
+    res.status(500).json({ ok: false, detail: "Falha ao solicitar código no WhatsApp." });
   }
 });
 
-app.post("/api/sticker/send", async (req, res) => {
+app.post("/api/sticker/send", rateLimit(30), async (req, res) => {
   const sessionId = validSessionId(req.body?.sessionId || req.headers["x-pulso-session"]);
   if (!sessionId) return res.status(400).json({ ok: false, detail: "sessionId inválido." });
 
   const { webpBase64, audioBase64, audioExt, duration, animated, side, pack, author } = req.body || {};
-  if (!webpBase64 || typeof webpBase64 !== "string") {
-    return res.status(400).json({ ok: false, detail: "Arquivo WebP ausente." });
+  if (!webpBase64 || typeof webpBase64 !== "string" || webpBase64.length > 3_000_000) {
+    return res.status(400).json({ ok: false, detail: "Arquivo WebP inválido ou grande demais." });
+  }
+  if (audioBase64 && (typeof audioBase64 !== "string" || audioBase64.length > 20_000_000)) {
+    return res.status(400).json({ ok: false, detail: "Arquivo de áudio grande demais." });
   }
 
   try {
     let webpBuf = Buffer.from(webpBase64, "base64");
+    if (webpBuf.length < 12 || webpBuf.length > 2_000_000 || webpBuf.toString("ascii", 0, 4) !== "RIFF" || webpBuf.toString("ascii", 8, 12) !== "WEBP") {
+      return res.status(400).json({ ok: false, detail: "Cabeçalho WebP inválido." });
+    }
     let oggBase64 = null;
     if (audioBase64 && typeof audioBase64 === "string") {
       const audioBuf = Buffer.from(audioBase64, "base64");
+      if (audioBuf.length > 15_000_000) {
+        return res.status(400).json({ ok: false, detail: "Áudio excedeu o limite suportado." });
+      }
       const isAlreadyOgg = audioBuf.length >= 4 && audioBuf.toString("ascii", 0, 4) === "OggS";
       if (isAlreadyOgg) {
+        if (audioBuf.length > 1_000_000) {
+          return res.status(400).json({ ok: false, detail: "Áudio Ogg excedeu 1 MB." });
+        }
         oggBase64 = audioBase64;
       } else {
-        // Safari iOS sent WAV -> convert cleanly to 48kHz Ogg/Opus and update WebP EXIF sound-sha256!
         const oggBuf = await convertAudioToOggOpus(audioBuf, audioExt || "wav");
         if (oggBuf.length > 1_000_000) {
           return res.status(400).json({ ok: false, detail: "Áudio Opus excedeu 1 MB. Reduza a duração do trecho." });
@@ -565,7 +643,7 @@ app.post("/api/sticker/send", async (req, res) => {
     const result = await runSerialized(s, async () => {
       const st = await inspectPage(s.page);
       if (!st.loggedIn) {
-        return { ok: false, level: "incompativel", detail: "Conecte seu WhatsApp primeiro (pelo número ou QR Code)!" };
+        return { ok: false, level: "incompativel", detail: "Conecte seu WhatsApp primeiro (pelo número ou QR Code)." };
       }
       return await waRpc(s.page, "send", {
         webp: webpBuf.toString("base64"),
@@ -582,10 +660,11 @@ app.post("/api/sticker/send", async (req, res) => {
     }
     res.json({
       ok: true,
-      detail: "🔊 Figurinha com som enviada para sua conversa 'Você' no WhatsApp!",
+      detail: "Figurinha enviada para a conversa 'Você' no WhatsApp.",
     });
   } catch (err) {
-    res.status(500).json({ ok: false, detail: err.message || "Falha ao enviar figurinha no servidor." });
+    console.error("[sticker/send]", err);
+    res.status(500).json({ ok: false, detail: "Falha ao enviar figurinha no servidor." });
   }
 });
 

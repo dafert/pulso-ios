@@ -1595,7 +1595,7 @@
   var zeroRect = { x: 0, y: 0, width: 1, height: 1 };
   var friendly = (error) => error?.message || "Ocorreu um erro ao ler o arquivo. Tente novamente.";
   document.title = BRAND.name + " · Editor de figurinhas";
-  el.nome.textContent = BRAND.name + " · " + BRAND.version;
+  el.nome.textContent = BRAND.name;
   el.marca.src = BRAND.icon + ".svg";
   var svg = document.createElementNS("http://www.w3.org/2000/svg", "svg");
   svg.setAttribute("viewBox", "0 0 24 24");
@@ -1789,6 +1789,10 @@
       el.player.load();
     }
     el["previa-audio"].hidden = !previewAudioUrl;
+    const bubbleSound = by("celular-som");
+    const phoneImg = by("celular-webp");
+    if (bubbleSound) bubbleSound.hidden = !previewAudioUrl || (!media && !result);
+    if (phoneImg) phoneImg.dataset.hasAudio = String(Boolean(previewAudioUrl));
     el["rotulo-audio"].textContent = audio ? "Áudio processado" : active?.sound === "extra" ? "Áudio selecionado" : "Áudio do vídeo";
     el["tamanho-webp"].value = result?.bytes.length || 0;
     el["tamanho-ogg"].value = audio?.bytes.length || 0;
@@ -2317,7 +2321,8 @@
           animated: job.result.animated,
           side: job.result.side || SIDE,
           pack: job.pack || "",
-          author: job.author || ""
+          author: job.author || "",
+          forward: false
         });
         job.sentResult = job.result;
         job.delivered = true;
@@ -2496,6 +2501,30 @@
     const [dx, dy] = moves[event.key];
     pan(dx * (event.shiftKey ? 0.12 : 0.035), dy * (event.shiftKey ? 0.12 : 0.035));
   });
+  const bubbleSoundBtn = by("celular-som");
+  const phoneStickerImg = by("celular-webp");
+  function togglePhoneStickerAudio() {
+    if (!el.player || !el.player.getAttribute("src")) return;
+    if (el.player.paused) {
+      el.player.currentTime = 0;
+      el.player.play().catch(() => {});
+    } else {
+      el.player.pause();
+    }
+  }
+  function syncBubbleSoundUi() {
+    if (!bubbleSoundBtn) return;
+    const playing = Boolean(el.player && !el.player.paused && !el.player.ended);
+    bubbleSoundBtn.dataset.playing = String(playing);
+    bubbleSoundBtn.textContent = playing ? "❚❚ Som" : "▶ Som";
+  }
+  if (bubbleSoundBtn) bubbleSoundBtn.addEventListener("click", togglePhoneStickerAudio);
+  if (phoneStickerImg) phoneStickerImg.addEventListener("click", togglePhoneStickerAudio);
+  if (el.player) {
+    el.player.addEventListener("play", syncBubbleSoundUi);
+    el.player.addEventListener("pause", syncBubbleSoundUi);
+    el.player.addEventListener("ended", syncBubbleSoundUi);
+  }
   for (const button of document.querySelectorAll("[data-step]")) button.addEventListener("click", () => setStep(Number(button.dataset.step), true));
   el.voltar.addEventListener("click", () => setStep(step - 1, true));
   el.proximo.addEventListener("click", () => setStep(step + 1, true));

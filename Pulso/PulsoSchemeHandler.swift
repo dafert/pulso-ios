@@ -4,13 +4,13 @@ import WebKit
 /// Serves bundled Pulso web assets (editor.html, editor.js, editor.css, encoder.wasm, icons) over pulso://app/
 final class PulsoSchemeHandler: NSObject, WKURLSchemeHandler {
     private let webRoot: URL
+    private let webRootPrefix: String
 
     override init() {
-        if let url = Bundle.main.url(forResource: "Web", withExtension: nil) {
-            self.webRoot = url
-        } else {
-            self.webRoot = Bundle.main.bundleURL
-        }
+        let root = Bundle.main.url(forResource: "Web", withExtension: nil) ?? Bundle.main.bundleURL
+        let standardized = root.standardizedFileURL
+        self.webRoot = standardized
+        self.webRootPrefix = standardized.path.hasSuffix("/") ? standardized.path : standardized.path + "/"
         super.init()
     }
 
@@ -23,8 +23,9 @@ final class PulsoSchemeHandler: NSObject, WKURLSchemeHandler {
         if relPath.hasPrefix("/") { relPath.removeFirst() }
         if relPath.isEmpty { relPath = "editor.html" }
 
-        let fileURL = webRoot.appendingPathComponent(relPath)
-        guard let data = try? Data(contentsOf: fileURL) else {
+        let fileURL = webRoot.appendingPathComponent(relPath).standardizedFileURL
+        guard fileURL.path.hasPrefix(webRootPrefix),
+              let data = try? Data(contentsOf: fileURL) else {
             let resp = HTTPURLResponse(url: url, statusCode: 404, httpVersion: "HTTP/1.1", headerFields: nil)!
             urlSchemeTask.didReceive(resp)
             urlSchemeTask.didFinish()
@@ -35,7 +36,7 @@ final class PulsoSchemeHandler: NSObject, WKURLSchemeHandler {
         let headers: [String: String] = [
             "Content-Type": mime,
             "Content-Length": "\(data.count)",
-            "Access-Control-Allow-Origin": "*"
+            "X-Content-Type-Options": "nosniff"
         ]
         let response = HTTPURLResponse(url: url, statusCode: 200, httpVersion: "HTTP/1.1", headerFields: headers)!
         urlSchemeTask.didReceive(response)

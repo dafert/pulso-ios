@@ -1,0 +1,79 @@
+{
+  "manifest_version": 3,
+  "version": "1.0.0",
+  "minimum_chrome_version": "120",
+  "permissions": [
+    "storage"
+  ],
+  "host_permissions": [
+    "https://web.whatsapp.com/*",
+    "https://pulso-extrefad.pages.dev/*"
+  ],
+  "background": {
+    "service_worker": "background.js"
+  },
+  "action": {
+    "default_title": "Pulso · Abrir ou recolher no WhatsApp Web",
+    "default_icon": {
+      "16": "icons/pulso-16.png",
+      "32": "icons/pulso-32.png",
+      "48": "icons/pulso-48.png",
+      "128": "icons/pulso-128.png"
+    }
+  },
+  "content_security_policy": {
+    "extension_pages": "default-src 'self'; script-src 'self' 'wasm-unsafe-eval'; object-src 'none'; connect-src 'self'; media-src 'self' blob:; img-src 'self' blob:; worker-src 'self'; style-src 'self'; frame-src 'none'; base-uri 'none'; form-action 'none'; frame-ancestors https://web.whatsapp.com"
+  },
+  "web_accessible_resources": [
+    {
+      "resources": [
+        "editor.html",
+        "media-worker.js",
+        "encoder.wasm"
+      ],
+      "matches": [
+        "https://web.whatsapp.com/*"
+      ]
+    }
+  ],
+  "content_scripts": [
+    {
+      "matches": [
+        "https://web.whatsapp.com/*"
+      ],
+      "js": [
+        "bridge.js"
+      ],
+      "run_at": "document_idle"
+    },
+    {
+      "matches": [
+        "https://web.whatsapp.com/*"
+      ],
+      "js": [
+        "wa-main.js"
+      ],
+      "run_at": "document_idle",
+      "world": "MAIN"
+    },
+    {
+      "matches": [
+        "https://pulso-extrefad.pages.dev/*",
+        "http://localhost/*",
+        "http://127.0.0.1/*"
+      ],
+      "js": [
+        "site-bridge.js"
+      ],
+      "run_at": "document_idle"
+    }
+  ],
+  "name": "Pulso",
+  "description": "Envia figurinhas animadas com som direto para sua aba aberta do WhatsApp Web.",
+  "icons": {
+    "16": "icons/pulso-16.png",
+    "32": "icons/pulso-32.png",
+    "48": "icons/pulso-48.png",
+    "128": "icons/pulso-128.png"
+  }
+}

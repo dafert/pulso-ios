@@ -65,6 +65,7 @@ jobs:
 
       - name: Assinar Pulso-iOS-signed.ipa (se Secrets estiverem configurados)
         id: sign
+        continue-on-error: true
         env:
           IOS_P12_BASE64: ${{ secrets.IOS_P12_BASE64 }}
           IOS_PROVISION_BASE64: ${{ secrets.IOS_PROVISION_BASE64 }}

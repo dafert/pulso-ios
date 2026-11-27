@@ -543,7 +543,7 @@
     const target = 95e4;
     if (typeof window.__pulsoEncodeOpusNative === "function" && (typeof AudioEncoder !== "function" || window.__PULSO_IOS__)) {
       const mono = pcm.channels.length === 1 ? pcm.channels[0] : Float32Array.from(pcm.channels[0], (s, i) => (s + pcm.channels[1][i]) / 2);
-      const bitrate = Math.min(64e3, Math.max(24e3, Math.floor(target * 7.5 / Math.max(0.1, duration))));
+      const bitrate = Math.min(48e3, Math.max(16e3, Math.floor(target * 7.5 / Math.max(0.1, duration))));
       const bytes = await window.__pulsoEncodeOpusNative(mono, bitrate);
       if (bytes.length > 1e6) throw new Error("O áudio excedeu 1 MB. Reduza o trecho.");
       return {
@@ -556,7 +556,23 @@
         offset: pcm.offset / AUDIO_RATE
       };
     }
-    if (typeof AudioEncoder !== "function") throw new Error("A codificação Opus requer um navegador Chromium atualizado.");
+    if (typeof AudioEncoder !== "function") {
+      if (typeof window.__pulsoEncodeAudioFallback === "function") {
+        const bytes = window.__pulsoEncodeAudioFallback(pcm.channels, AUDIO_RATE);
+        return {
+          bytes,
+          duration,
+          channels: 1,
+          mime: "audio/wav",
+          ext: "wav",
+          signal: pcm.signal,
+          lufs: pcm.lufs,
+          dbtp: pcm.dbtp,
+          offset: pcm.offset / AUDIO_RATE
+        };
+      }
+      throw new Error("A codificação Opus requer um navegador Chromium atualizado.");
+    }
     const maxBitrate = lowResource ? 96e3 : pcm.channels.length === 1 ? 112e3 : 256e3;
     const complexity = lowResource ? 5 : 10;
     let bitrate = Math.min(maxBitrate, Math.floor(target * 7.8 / duration));
@@ -1371,7 +1387,7 @@
           finish(fallbackError);
         }
       }
-      if (workerDisabled || window.__PULSO_ANDROID__ || window.__PULSO_WEB__ || typeof Worker !== "function") {
+      if (workerDisabled || window.__PULSO_WEB__ || typeof Worker !== "function") {
         void recoverLocally(Object.assign(new Error("Worker indisponível."), { name: "WorkerCrashedError" }));
         return;
       }
@@ -1499,7 +1515,7 @@
     };
     for (let attempt = 0; attempt < 4; attempt++) {
       let result;
-      if (lowResourceAudio || window.__PULSO_ANDROID__ || window.__PULSO_WEB__) {
+      if (lowResourceAudio || window.__PULSO_WEB__) {
         result = await encodeLocally();
       } else {
         const data = { what: "audio", pcm: samplesOf(buffer, range), audioOptions, attenuation, lowResourceAudio };
@@ -1528,9 +1544,9 @@
   var by = (id) => document.getElementById(id);
   var el = Object.fromEntries([...document.querySelectorAll("[id]")].map((node) => [node.id, node]));
   var storageKey = "pulso-preferencias";
-  var embedded = Boolean(window.__PULSO_IOS__) || Boolean(window.__PULSO_ANDROID__) || Boolean(window.__PULSO_WEB__) || (window.parent !== window && location.ancestorOrigins?.length === 1 && location.ancestorOrigins[0] === WA_ORIGIN);
+  var embedded = Boolean(window.__PULSO_IOS__) || Boolean(window.__PULSO_WEB__) || (window.parent !== window && location.ancestorOrigins?.length === 1 && location.ancestorOrigins[0] === WA_ORIGIN);
   var tellPanel = (what, reason) => {
-    if (window.__PULSO_IOS__ || window.__PULSO_ANDROID__) {
+    if (window.__PULSO_IOS__) {
       if (what === "close" && typeof window.__pulsoClosePanel === "function") window.__pulsoClosePanel();
       return;
     }
@@ -1579,7 +1595,7 @@
   var zeroRect = { x: 0, y: 0, width: 1, height: 1 };
   var friendly = (error) => error?.message || "Ocorreu um erro ao ler o arquivo. Tente novamente.";
   document.title = BRAND.name + " · Editor de figurinhas";
-  el.nome.textContent = BRAND.name + " · " + BRAND.version;
+  el.nome.textContent = BRAND.name;
   el.marca.src = BRAND.icon + ".svg";
   var svg = document.createElementNS("http://www.w3.org/2000/svg", "svg");
   svg.setAttribute("viewBox", "0 0 24 24");
@@ -1662,7 +1678,12 @@
     }
     const pending = jobs.filter(batchEligible).length;
     const uncertain = jobs.filter((job) => job.deliveryUncertain).length;
-    el["enviar-fila"].textContent = pending ? `🔊 Enviar fila com som · ${pending}` : uncertain ? `Confira ${uncertain} no WhatsApp` : "Fila enviada";
+    if (window.__PULSO_WEB__) {
+      el["enviar-fila"].textContent = pending ? `Preparar e baixar fila · ${pending}` : "Fila concluída";
+      if (el["baixar-ogg"]) el["baixar-ogg"].textContent = active?.audio?.ext === "wav" ? "Baixar áudio (.wav)" : "Baixar áudio (.ogg)";
+    } else {
+      el["enviar-fila"].textContent = pending ? `Enviar fila · ${pending}` : uncertain ? `Confira ${uncertain} no WhatsApp` : "Fila enviada";
+    }
     el.resultado.dataset.drag = ready && active.options.mode === "cortar";
   }
   async function perform(task, cancelable = true, batch = false) {
@@ -1768,6 +1789,10 @@
       el.player.load();
     }
     el["previa-audio"].hidden = !previewAudioUrl;
+    const bubbleSound = by("celular-som");
+    const phoneImg = by("celular-webp");
+    if (bubbleSound) bubbleSound.hidden = !previewAudioUrl || (!media && !result);
+    if (phoneImg) phoneImg.dataset.hasAudio = String(Boolean(previewAudioUrl));
     el["rotulo-audio"].textContent = audio ? "Áudio processado" : active?.sound === "extra" ? "Áudio selecionado" : "Áudio do vídeo";
     el["tamanho-webp"].value = result?.bytes.length || 0;
     el["tamanho-ogg"].value = audio?.bytes.length || 0;
@@ -2050,7 +2075,7 @@
     const range = job.sound === "extra" ? job.extraRange : job.range;
     const rendered = await renderAudio(audio, range, job.audioOptions, signal, progress);
     job.audioWarning = false;
-    job.audio = { ...rendered, url: URL.createObjectURL(new Blob([rendered.bytes], { type: "audio/ogg; codecs=opus" })) };
+    job.audio = { ...rendered, url: URL.createObjectURL(new Blob([rendered.bytes], { type: rendered.mime || "audio/ogg; codecs=opus" })) };
   }
   async function prepare(job, signal, automatic = false, inBatch = false, budget, force512 = false) {
     if (!job.range) {
@@ -2156,20 +2181,18 @@
       const level = result.level || "incompativel";
       const titles = { compativel: "Compatível", parcial: "Parcial", incompativel: "WhatsApp (som) desconectado" };
       el.compatibilidade.dataset.level = level;
-      const isNativeMobile = Boolean(window.__PULSO_IOS__ || window.__PULSO_ANDROID__);
-      if (isNativeMobile && level === "incompativel") {
+      if (window.__PULSO_IOS__ && level === "incompativel") {
         el.compatibilidade.textContent = "WhatsApp desconectado · Toque em '📱 Conectar número' para enviar com som.";
       } else {
         el.compatibilidade.textContent = titles[level] + " · " + result.detail;
       }
-      if (el["conectar-wa"]) el["conectar-wa"].hidden = !(isNativeMobile && level === "incompativel");
+      if (el["conectar-wa"]) el["conectar-wa"].hidden = !(window.__PULSO_IOS__ && level === "incompativel");
     } catch (error) {
-      const isNativeMobile = Boolean(window.__PULSO_IOS__ || window.__PULSO_ANDROID__);
       el.compatibilidade.dataset.level = "incompativel";
-      el.compatibilidade.textContent = isNativeMobile
+      el.compatibilidade.textContent = window.__PULSO_IOS__
         ? "WhatsApp desconectado · Toque em '📱 Conectar número' para enviar com som."
         : "Incompatível · " + friendly(error);
-      if (el["conectar-wa"]) el["conectar-wa"].hidden = !isNativeMobile;
+      if (el["conectar-wa"]) el["conectar-wa"].hidden = !window.__PULSO_IOS__;
     } finally {
       el.rever.disabled = false;
     }
@@ -2269,7 +2292,7 @@
     if (!result?.ok) {
       if (!result || result.detailCode === "incerto") job.deliveryUncertain = true;
       refreshQueue();
-      if ((window.__PULSO_IOS__ || window.__PULSO_ANDROID__) && result?.level === "incompativel" && typeof window.__pulsoOpenWhatsAppLogin === "function") {
+      if (window.__PULSO_IOS__ && result?.level === "incompativel" && typeof window.__pulsoOpenWhatsAppLogin === "function") {
         window.__pulsoOpenWhatsAppLogin(true);
       }
       throw new Error(result?.detail || "O WhatsApp não confirmou o envio.");
@@ -2281,7 +2304,57 @@
     refreshQueue();
     return result;
   }
+  window.__pulsoRefreshStatus = () => { if (typeof checkCompatibility === "function") checkCompatibility(); };
   async function send(job, signal) {
+    if (window.__PULSO_WEB__) {
+      const srv = typeof window.__pulsoServerState === "function" ? window.__pulsoServerState() : { connected: false };
+      if (!job.result) await prepare(job, signal);
+      await prepareForSend(job, signal);
+      signal.throwIfAborted();
+      if (srv.connected && typeof window.__pulsoSendViaServer === "function") {
+        progress("Enviando figurinha com som…", 0.94);
+        const resp = await window.__pulsoSendViaServer({
+          webpBase64: toBase64(job.result.bytes),
+          audioBase64: job.audio ? toBase64(job.audio.bytes) : null,
+          audioExt: job.audio ? (job.audio.ext || "ogg") : null,
+          duration: job.audio ? Math.max(1, Math.round(job.audio.duration)) : 0,
+          animated: job.result.animated,
+          side: job.result.side || SIDE,
+          pack: job.pack || "",
+          author: job.author || "",
+          forward: false
+        });
+        job.sentResult = job.result;
+        job.delivered = true;
+        job.deliveryUncertain = false;
+        job.batchError = "";
+        refreshQueue();
+        status(resp.detail || "Figurinha enviada para a conversa 'Você' no WhatsApp.");
+        return;
+      }
+      // Em hospedagem estática: baixa (ou compartilha) WebP + áudio diretamente
+      const baseName = job.file.name.replace(/\.[^.]+$/, "");
+      const shareList = [new File([job.result.bytes], baseName + ".webp", { type: "image/webp" })];
+      if (job.audio) {
+        const ext = job.audio.ext || "ogg";
+        shareList.push(new File([job.audio.bytes], baseName + "." + ext, { type: ext === "wav" ? "audio/wav" : "audio/ogg" }));
+      }
+      let shared = false;
+      if (typeof window.__pulsoShareFiles === "function") {
+        try { shared = await window.__pulsoShareFiles(shareList, baseName); } catch {}
+      }
+      if (!shared) {
+        download(job.result.url, "webp");
+        if (job.audio) download(job.audio.url, job.audio.ext || "ogg");
+      }
+      job.sentResult = job.result;
+      job.delivered = true;
+      job.deliveryUncertain = false;
+      job.batchError = "";
+      refreshQueue();
+      status(job.audio ? "Figurinha (.webp) e áudio baixados." : "Figurinha (.webp) baixada.");
+      return;
+    }
     if (!job.result) {
       await prepare(job, signal);
       status("Confira a prévia e clique em Enviar pelo WhatsApp para confirmar.");
@@ -2318,6 +2391,47 @@
         continue;
       }
       if (signal.aborted) break;
+      if (window.__PULSO_WEB__) {
+        const srv = typeof window.__pulsoServerState === "function" ? window.__pulsoServerState() : { connected: false };
+        if (srv.connected && typeof window.__pulsoSendViaServer === "function") {
+          try {
+            progress("Enviando com som pro WhatsApp…", 0.94);
+            await window.__pulsoSendViaServer({
+              webpBase64: toBase64(job.result.bytes),
+              audioBase64: job.audio ? toBase64(job.audio.bytes) : null,
+              audioExt: job.audio ? (job.audio.ext || "ogg") : null,
+              duration: job.audio ? Math.max(1, Math.round(job.audio.duration)) : 0,
+              animated: job.result.animated,
+              side: job.result.side || SIDE,
+              pack: job.pack || "",
+              author: job.author || ""
+            });
+            job.sentResult = job.result;
+            job.delivered = true;
+            job.batchError = "";
+            sent++;
+            refreshQueue();
+            if (index + 1 < pending.length && !signal.aborted) await new Promise((r) => setTimeout(r, 1200));
+            continue;
+          } catch (error) {
+            sendError = friendly(error);
+            job.batchError = sendError;
+            invalid++;
+            refreshQueue();
+            continue;
+          }
+        }
+        const prevActive = active;
+        active = job;
+        download(job.result.url, "webp");
+        if (job.audio) download(job.audio.url, job.audio.ext || "ogg");
+        active = prevActive;
+        job.delivered = true;
+        job.batchError = "";
+        sent++;
+        refreshQueue();
+        continue;
+      }
       try {
         await sendPrepared(job, false);
         sent++;
@@ -2334,7 +2448,9 @@
         continue;
       }
     }
-    const summary = sent + " de " + pending.length + " figurinhas enviadas para a sua conversa.";
+    const summary = window.__PULSO_WEB__
+      ? sent + " de " + pending.length + " figurinhas preparadas e baixadas."
+      : sent + " de " + pending.length + " figurinhas enviadas para a sua conversa.";
     if (signal.aborted) status(summary + " Fila interrompida.");
     else if (invalid || sendError) status(summary + " Confira os avisos nos itens da fila.", true);
     else status(summary);
@@ -2385,6 +2501,30 @@
     const [dx, dy] = moves[event.key];
     pan(dx * (event.shiftKey ? 0.12 : 0.035), dy * (event.shiftKey ? 0.12 : 0.035));
   });
+  const bubbleSoundBtn = by("celular-som");
+  const phoneStickerImg = by("celular-webp");
+  function togglePhoneStickerAudio() {
+    if (!el.player || !el.player.getAttribute("src")) return;
+    if (el.player.paused) {
+      el.player.currentTime = 0;
+      el.player.play().catch(() => {});
+    } else {
+      el.player.pause();
+    }
+  }
+  function syncBubbleSoundUi() {
+    if (!bubbleSoundBtn) return;
+    const playing = Boolean(el.player && !el.player.paused && !el.player.ended);
+    bubbleSoundBtn.dataset.playing = String(playing);
+    bubbleSoundBtn.textContent = playing ? "❚❚ Som" : "▶ Som";
+  }
+  if (bubbleSoundBtn) bubbleSoundBtn.addEventListener("click", togglePhoneStickerAudio);
+  if (phoneStickerImg) phoneStickerImg.addEventListener("click", togglePhoneStickerAudio);
+  if (el.player) {
+    el.player.addEventListener("play", syncBubbleSoundUi);
+    el.player.addEventListener("pause", syncBubbleSoundUi);
+    el.player.addEventListener("ended", syncBubbleSoundUi);
+  }
   for (const button of document.querySelectorAll("[data-step]")) button.addEventListener("click", () => setStep(Number(button.dataset.step), true));
   el.voltar.addEventListener("click", () => setStep(step - 1, true));
   el.proximo.addEventListener("click", () => setStep(step + 1, true));
@@ -2456,7 +2596,7 @@
     }
   }, false));
   el["baixar-ogg"].addEventListener("click", () => {
-    if (active?.audio) download(active.audio.url, "ogg");
+    if (active?.audio) download(active.audio.url, active.audio.ext || "ogg");
   });
   el["pre-ouvir"].addEventListener("click", () => perform(async (signal) => {
     await prepareAudio(active, signal, false);

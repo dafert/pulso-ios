@@ -1,0 +1,13 @@
+PULSO 0.9.5 — pacote pronto para instalar (já compilado)
+
+1. Extraia este ZIP em uma pasta que você não vai mover (ex.: Documentos\pulso-0.9.5).
+2. Abra chrome://extensions (ou edge://extensions / brave://extensions) e ative o "Modo do desenvolvedor".
+3. Clique em "Carregar sem compactação" e escolha a pasta pulso-0.9.5 (a que tem o manifest.json DENTRO).
+4. Abra ou RECARREGUE o web.whatsapp.com (F5). Clique no botão "Pulso" no canto inferior direito
+   (ou no ícone da extensão) para abrir o painel.
+
+Se aparecer "Recarregue o WhatsApp Web", aperte F5 na aba do WhatsApp.
+Não use a pasta do código-fonte: ela não funciona sem compilar (npm run build).
+Leia o LEIAME.md para o guia completo.
+
+ATUALIZAÇÃO: se uma versão antiga estiver carregada, clique em Recarregar em chrome://extensions e depois atualize o WhatsApp Web (F5).

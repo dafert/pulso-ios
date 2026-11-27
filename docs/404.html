@@ -1,0 +1,68 @@
+<!doctype html>
+<html lang="pt-BR">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+  <meta name="color-scheme" content="light dark">
+  <title>Página não encontrada — Pulso</title>
+  <link rel="icon" type="image/png" href="/icon.png">
+  <style>
+    :root {
+      color-scheme: light dark;
+      --bg-l: #f6f3fa; --bg-d: #120e1a;
+      --card-l: #ffffff; --card-d: #1c1528;
+      --ink-l: #1d152b; --ink-d: #f6effc;
+      --sub-l: #5e536e; --sub-d: #bfb1cf;
+      --rule-l: #dfd6ea; --rule-d: #382a4c;
+      --accent-l: #6a38d4; --accent-d: #9c72ff;
+      --bg: var(--bg-l); --card: var(--card-l); --ink: var(--ink-l);
+      --sub: var(--sub-l); --rule: var(--rule-l); --accent: var(--accent-l);
+      font-family: Inter, -apple-system, BlinkMacSystemFont, "Segoe UI", system-ui, sans-serif;
+    }
+    @media (prefers-color-scheme: dark) {
+      :root {
+        --bg: var(--bg-d); --card: var(--card-d); --ink: var(--ink-d);
+        --sub: var(--sub-d); --rule: var(--rule-d); --accent: var(--accent-d);
+      }
+    }
+    @supports (color: light-dark(white, black)) {
+      :root {
+        --bg: light-dark(var(--bg-l), var(--bg-d));
+        --card: light-dark(var(--card-l), var(--card-d));
+        --ink: light-dark(var(--ink-l), var(--ink-d));
+        --sub: light-dark(var(--sub-l), var(--sub-d));
+        --rule: light-dark(var(--rule-l), var(--rule-d));
+        --accent: light-dark(var(--accent-l), var(--accent-d));
+      }
+    }
+    * { box-sizing: border-box; }
+    body {
+      margin: 0; min-height: 100dvh; display: grid; place-items: center; padding: 20px;
+      background: var(--bg); color: var(--ink);
+    }
+    main {
+      max-width: 440px; width: 100%; background: var(--card); border: 1px solid var(--rule);
+      border-radius: 22px; padding: 28px; text-align: center;
+    }
+    h1 { margin: 0 0 8px; font-size: 1.5rem; letter-spacing: -.03em; }
+    p { margin: 0 0 20px; color: var(--sub); font-size: .94rem; }
+    .actions { display: flex; gap: 10px; justify-content: center; flex-wrap: wrap; }
+    a {
+      text-decoration: none; font-weight: 700; font-size: .9rem; padding: 11px 16px;
+      border-radius: 12px; min-height: 44px; display: inline-flex; align-items: center;
+    }
+    .primary { background: var(--accent); color: #fff; }
+    .secondary { border: 1px solid var(--rule); color: var(--ink); }
+  </style>
+</head>
+<body>
+  <main>
+    <h1>Página não encontrada</h1>
+    <p>O endereço que você tentou abrir não existe neste site.</p>
+    <div class="actions">
+      <a class="primary" href="/">Ir para o início</a>
+      <a class="secondary" href="/app/">Abrir Editor Web</a>
+    </div>
+  </main>
+</body>
+</html>

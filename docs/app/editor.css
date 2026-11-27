@@ -247,8 +247,15 @@ audio { display: block; width: 100%; height: 48px; margin-top: .25rem; }
 [data-tone=escuro] .phone-header { background: #32243d; }
 .avatar { display: grid; place-items: center; background: #d8beef; color: #442a64; width: 25px; height: 25px; border-radius: 50%; font-size: .75rem; }
 .conversation { background: radial-gradient(circle, #9b71ae33 1.25px, transparent 1.25px) 0 0 / 16px 16px; padding: .66rem .55rem 1.6rem; min-height: 193px; display: flex; justify-content: flex-end; align-items: flex-start; }
-.bubble { width: min(100%, 165px); background: #e0f4e7; border-radius: 13px 3px 13px 13px; padding: 7px; display: flex; flex-direction: column; align-items: center; color: #33413b; }
+.bubble { position: relative; width: min(100%, 165px); background: #e0f4e7; border-radius: 13px 3px 13px 13px; padding: 7px; display: flex; flex-direction: column; align-items: center; color: #33413b; }
 [data-tone=escuro] .bubble { background: #264f46; color: #e2f5ed; }
+.bubble-sound {
+  position: absolute; top: 8px; left: 8px; z-index: 2;
+  background: rgba(18, 14, 26, 0.78); color: #fff; border: 0; border-radius: 999px;
+  padding: 4px 9px; font-size: .72rem; font-weight: 700; min-height: 28px; cursor: pointer;
+}
+.bubble-sound[data-playing="true"] { background: #1e9e63; }
+#celular-webp[data-has-audio="true"] { cursor: pointer; }
 .bubble img, .bubble canvas { width: 100%; height: auto; aspect-ratio: 1; object-fit: contain; }
 .bubble span:not(.checks) { text-align: center; font-size: .72rem; min-height: 95px; display: grid; place-items: center; }
 .checks { font-size: .75rem; align-self: flex-end; letter-spacing: -.27em; padding-right: .25em; color: #267665; }

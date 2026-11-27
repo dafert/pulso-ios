@@ -18,11 +18,14 @@ android {
     signingConfigs {
         release {
             def ksPath = System.getenv('ANDROID_KEYSTORE_PATH')
-            if (ksPath != null && !ksPath.trim().isEmpty() && file(ksPath).exists()) {
+            def ksPass = System.getenv('ANDROID_KEYSTORE_PASSWORD')
+            def kAlias = System.getenv('ANDROID_KEY_ALIAS')
+            def kPass = System.getenv('ANDROID_KEY_PASSWORD')
+            if (ksPath != null && !ksPath.trim().isEmpty() && file(ksPath).exists() && ksPass && kAlias && kPass) {
                 storeFile file(ksPath)
-                storePassword(System.getenv('ANDROID_KEYSTORE_PASSWORD') ?: 'pulso123456')
-                keyAlias(System.getenv('ANDROID_KEY_ALIAS') ?: 'pulso')
-                keyPassword(System.getenv('ANDROID_KEY_PASSWORD') ?: 'pulso123456')
+                storePassword ksPass
+                keyAlias kAlias
+                keyPassword kPass
             }
         }
     }

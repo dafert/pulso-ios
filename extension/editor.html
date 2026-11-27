@@ -1,0 +1,143 @@
+<!doctype html>
+<html lang="pt-BR">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <meta name="color-scheme" content="light dark">
+  <title>Editor de figurinhas</title>
+  <link rel="stylesheet" href="editor.css">
+  <script src="editor.js" defer></script>
+</head>
+<body>
+  <a class="skip" href="#estudio">Ir para o editor</a>
+  <header class="masthead">
+    <div class="masthead-main">
+      <div class="identity"><img id="marca" alt="" width="42" height="42"><span id="nome"></span></div>
+      <span class="private" id="privacidade">Processamento local</span>
+      <button type="button" id="fechar-painel" class="flat close-panel" aria-label="Recolher painel">×</button>
+    </div>
+    <div class="integration">
+      <p id="compatibilidade" role="status">Verificando o WhatsApp Web…</p>
+      <button type="button" id="rever" class="flat">Verificar</button>
+    </div>
+  </header>
+  <main id="estudio" tabindex="-1">
+    <section class="cover" aria-labelledby="titulo">
+      <div><h1 id="titulo">Sua figurinha, <em>com som.</em></h1><p>Recorte um vídeo, GIF ou imagem, acerte o som e veja como fica antes de enviar.</p></div>
+      <button type="button" id="automatico" class="auto">✨ Automático</button>
+    </section>
+    <section id="acoes-fila" class="batch-actions global-batch" hidden aria-label="Envio da fila">
+      <div><strong>Envio em sequência</strong><p class="muted help">As figurinhas pendentes serão preparadas e enviadas para a sua conversa no WhatsApp.</p></div>
+      <button type="button" id="enviar-fila" class="primary">Enviar fila</button>
+    </section>
+    <div class="workspace">
+      <section class="card settings" aria-label="Etapas do editor">
+        <nav class="steps" aria-label="Etapas">
+          <button type="button" data-step="1" aria-current="step">Arquivo</button>
+          <button type="button" data-step="2">Enquadrar</button>
+          <button type="button" data-step="3">Áudio</button>
+          <button type="button" data-step="4">Qualidade</button>
+          <button type="button" data-step="5">Enviar</button>
+        </nav>
+        <section class="step" id="etapa-1" aria-labelledby="arquivo-titulo">
+          <h2 id="arquivo-titulo">Arquivo</h2>
+          <label class="drop" id="soltar" for="arquivo">
+            <span class="drop-icon" id="icone-arquivo" aria-hidden="true"></span>
+            <strong>Solte seus arquivos aqui</strong><span>ou escolha um vídeo, GIF ou imagem</span>
+            <span class="picker">Escolher arquivos</span>
+          </label>
+          <input id="arquivo" type="file" accept="video/*,image/*,.mov,.mkv,.apng" multiple>
+          <p class="muted help">Até 64 MiB por arquivo. Você também pode colar uma imagem com Ctrl+V.</p>
+          <div class="queue-head"><h3>Fila</h3><span id="total-fila">0 de 15</span></div>
+          <ul id="fila" class="queue" aria-label="Arquivos na fila"></ul>
+          <p id="arquivo-info" class="muted"></p>
+        </section>
+        <section class="step" id="etapa-2" hidden aria-labelledby="crop-titulo">
+          <h2 id="crop-titulo">Enquadrar</h2>
+          <label class="field">Modo
+            <select id="modo"><option value="cortar">Cortar · preenche o quadro</option><option value="ajustar">Ajustar · margens transparentes</option><option value="esticar">Esticar · deforma a imagem</option></select>
+          </label>
+          <div class="row wrap"><label class="check"><input type="checkbox" id="bordas">Remover bordas detectadas</label><button type="button" class="flat" id="desfazer">Desfazer corte de bordas</button></div>
+          <p id="bordas-info" class="muted help"></p>
+          <label class="field">Zoom <output id="zoom-valor">1,00×</output><input id="zoom" type="range" min="1" max="4" step="0.05" value="1"></label>
+          <button type="button" class="flat" id="foco">Usar foco sugerido</button>
+          <p class="muted help">Em Cortar, arraste a prévia do resultado ou use as setas com a prévia em foco.</p>
+          <p class="callout">O quadro da figurinha tem 512 × 512 px. No celular, o conteúdo parece maior quando ocupa o quadro inteiro.</p>
+        </section>
+        <section class="step" id="etapa-3" hidden aria-labelledby="audio-titulo">
+          <h2 id="audio-titulo">Áudio</h2>
+          <label class="field">Faixa sonora
+            <select id="som"><option value="original">Áudio do vídeo</option><option value="extra">Arquivo separado</option><option value="mudo">Sem som</option></select>
+          </label>
+          <label class="field" id="som-extra" hidden>Escolher outro áudio <input id="faixa" type="file" accept="audio/*,video/*,.ogg,.opus"></label>
+          <p id="faixa-nome" class="muted help"></p>
+          <fieldset class="check-group"><legend>Tratamento</legend>
+            <label class="check"><input type="checkbox" id="normalizar">Normalizar para cerca de −16 LUFS</label>
+            <label class="check"><input type="checkbox" id="silencio">Cortar silêncio nas pontas</label>
+            <label class="check"><input type="checkbox" id="voz">Realçar voz</label>
+          </fieldset>
+          <button type="button" id="pre-ouvir" class="secondary">Processar para ouvir</button>
+          <p id="audio-info" class="muted help"></p>
+        </section>
+        <section class="step" id="etapa-4" hidden aria-labelledby="qualidade-titulo">
+          <h2 id="qualidade-titulo">Qualidade</h2>
+          <label class="field">Predefinição
+            <select id="preset"><option value="maxima">Máxima qualidade</option><option value="equilibrado">Equilibrado</option><option value="leve">Leve</option></select>
+          </label>
+          <label class="field">Limite de quadros por segundo
+            <select id="fps"><option value="0">Automático</option><option value="30">30 fps</option><option value="24">24 fps</option><option value="20">20 fps</option><option value="15">15 fps</option><option value="10">10 fps</option><option value="5">5 fps</option></select>
+          </label>
+          <label class="check"><input id="fixa" type="checkbox">Usar primeiro quadro como figurinha estática</label>
+          <button type="button" id="preparar" class="secondary block-button">Preparar figurinha</button>
+          <p id="medicao" class="muted help"></p>
+          <div class="meter-row"><label for="tamanho-webp">Figurinha</label><meter id="tamanho-webp" min="0" max="1000000" value="0"></meter><output id="peso-webp">— / 1 MB</output></div>
+          <div class="meter-row"><label for="tamanho-ogg">Áudio</label><meter id="tamanho-ogg" min="0" max="1000000" value="0"></meter><output id="peso-ogg">— / 1 MB</output></div>
+        </section>
+        <section class="step" id="etapa-5" hidden aria-labelledby="enviar-titulo">
+          <h2 id="enviar-titulo">Enviar</h2>
+          <label class="field">Nome do pacote <input id="pacote" type="text" maxlength="128" placeholder="Opcional" autocomplete="off"></label>
+          <label class="field">Autor <input id="autor" type="text" maxlength="128" placeholder="Opcional" autocomplete="off"></label>
+          <label class="field">Destino
+            <select id="destino"><option value="encaminhar">Salvar na minha conversa + Encaminhar</option><option value="salvar">Só salvar na minha conversa</option></select>
+          </label>
+          <p class="muted help">Você escolhe os destinatários na janela de encaminhamento do WhatsApp.</p>
+          <button type="button" id="enviar" class="primary block-button">Enviar pelo WhatsApp</button>
+          <div class="row wrap exports"><button type="button" class="flat" id="baixar-webp">Baixar WebP</button><button type="button" class="flat" id="baixar-ogg">Baixar Ogg</button></div>
+        </section>
+        <footer class="step-controls"><button type="button" class="flat" id="voltar">Voltar</button><button type="button" id="proximo" class="secondary">Próximo</button></footer>
+      </section>
+      <section class="card preview" aria-labelledby="previa-titulo">
+        <header class="preview-heading"><h2 id="previa-titulo">Prévia</h2><span id="dimensao">512 × 512 px</span></header>
+        <div class="compare">
+          <figure><figcaption>Original</figcaption><div class="visual checker" id="original"><span>Escolha um arquivo</span></div></figure>
+          <figure><figcaption>Resultado</figcaption><div class="visual checker" id="resultado" tabindex="0" aria-label="Prévia do resultado. Use as setas para mover o corte.">
+            <canvas id="rascunho" width="512" height="512" hidden aria-hidden="true"></canvas><img id="webp" alt="Figurinha preparada" hidden><span id="resultado-vazio">Aguardando arquivo</span>
+          </div></figure>
+        </div>
+        <div id="timeline" class="timeline" hidden>
+          <div class="row between"><label id="timeline-titulo">Trecho visual</label><output id="tempo"></output></div>
+          <canvas id="onda" width="720" height="74" aria-hidden="true"></canvas>
+          <div class="range-row"><label for="inicio">Início</label><input type="range" id="inicio" min="0" step="0.01"><output id="tempo-inicio"></output></div>
+          <div class="range-row"><label for="fim">Fim</label><input type="range" id="fim" min="0" step="0.01"><output id="tempo-fim"></output></div>
+          <label for="tempo-alvo" id="trilha-extra" class="check" hidden><input type="checkbox" id="tempo-alvo">Editar trecho do áudio separado</label>
+        </div>
+        <div class="audio-preview" id="previa-audio" hidden><label for="player" id="rotulo-audio">Áudio</label><audio id="player" controls preload="metadata"></audio></div>
+      </section>
+      <aside class="card phone-card" aria-labelledby="celular-titulo">
+        <header class="preview-heading"><h2 id="celular-titulo">No celular</h2></header>
+        <div class="phone" data-tone="claro">
+          <div class="phone-header"><span class="avatar" aria-hidden="true">V</span><span>Você</span></div>
+          <div class="conversation"><div class="bubble"><canvas id="celular-canvas" width="192" height="192" hidden aria-hidden="true"></canvas><img id="celular-webp" alt="Figurinha na conversa" hidden><span id="celular-vazio">Sua figurinha aparece aqui</span><span class="checks" aria-hidden="true">✓✓</span></div></div>
+        </div>
+        <div class="phone-controls"><label>Tema da conversa <select id="tema-celular"><option value="auto">Automático</option><option value="claro">Claro</option><option value="escuro">Escuro</option></select></label></div>
+        <p class="muted help">A escala pode variar conforme o celular e a versão do WhatsApp.</p>
+      </aside>
+    </div>
+    <div class="activity" id="atividade">
+      <p id="status" role="status">Escolha um arquivo para começar.</p>
+      <progress id="progresso" max="1" hidden aria-label="Progresso do processamento"></progress>
+      <button type="button" id="cancelar" class="flat" hidden>Cancelar</button>
+    </div>
+  </main>
+</body>
+</html>

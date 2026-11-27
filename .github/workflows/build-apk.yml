@@ -31,21 +31,37 @@ jobs:
           gradle-version: '8.10.2'
 
       - name: Preparar chave de assinatura Android
+        env:
+          SECRET_KS_B64: ${{ secrets.ANDROID_KEYSTORE_BASE64 }}
+          SECRET_KS_PASS: ${{ secrets.ANDROID_KEYSTORE_PASSWORD }}
+          SECRET_KEY_ALIAS: ${{ secrets.ANDROID_KEY_ALIAS }}
+          SECRET_KEY_PASS: ${{ secrets.ANDROID_KEY_PASSWORD }}
         run: |
           KEYSTORE="$RUNNER_TEMP/pulso-release.jks"
-          keytool -genkeypair -v \
-            -keystore "$KEYSTORE" \
-            -alias pulso \
-            -keyalg RSA \
-            -keysize 2048 \
-            -validity 10000 \
-            -storepass pulso123456 \
-            -keypass pulso123456 \
-            -dname "CN=Pulso Open Source, OU=extrefad, O=Pulso, L=BR, S=BR, C=BR"
+          if [ -n "$SECRET_KS_B64" ] && [ -n "$SECRET_KS_PASS" ] && [ -n "$SECRET_KEY_ALIAS" ] && [ -n "$SECRET_KEY_PASS" ]; then
+            printf '%s' "$SECRET_KS_B64" | tr -d '\r\n' | base64 --decode > "$KEYSTORE"
+            KS_PASS="$SECRET_KS_PASS"
+            KEY_ALIAS="$SECRET_KEY_ALIAS"
+            KEY_PASS="$SECRET_KEY_PASS"
+          else
+            KS_PASS=$(openssl rand -hex 20)
+            KEY_PASS="$KS_PASS"
+            KEY_ALIAS="pulso"
+            echo "::add-mask::$KS_PASS"
+            keytool -genkeypair -v \
+              -keystore "$KEYSTORE" \
+              -alias "$KEY_ALIAS" \
+              -keyalg RSA \
+              -keysize 2048 \
+              -validity 10000 \
+              -storepass "$KS_PASS" \
+              -keypass "$KEY_PASS" \
+              -dname "CN=Pulso, OU=extrefad, O=Pulso, L=BR, S=BR, C=BR"
+          fi
           echo "ANDROID_KEYSTORE_PATH=$KEYSTORE" >> "$GITHUB_ENV"
-          echo "ANDROID_KEYSTORE_PASSWORD=pulso123456" >> "$GITHUB_ENV"
-          echo "ANDROID_KEY_ALIAS=pulso" >> "$GITHUB_ENV"
-          echo "ANDROID_KEY_PASSWORD=pulso123456" >> "$GITHUB_ENV"
+          echo "ANDROID_KEYSTORE_PASSWORD=$KS_PASS" >> "$GITHUB_ENV"
+          echo "ANDROID_KEY_ALIAS=$KEY_ALIAS" >> "$GITHUB_ENV"
+          echo "ANDROID_KEY_PASSWORD=$KEY_PASS" >> "$GITHUB_ENV"
 
       - name: Compilar Pulso-Android.apk (Release)
         working-directory: android

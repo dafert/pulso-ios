@@ -9,7 +9,7 @@ Editor e cliente para criar e enviar figurinhas animadas com som sincronizado (W
 ## Como usar
 
 ### Navegador (Web)
-Abra o [App Web](https://pulso-extrefad.pages.dev/app/), selecione um vídeo, GIF ou imagem e gere a figurinha em 512 × 512 com o áudio sincronizado. Todo o processamento ocorre localmente no navegador.
+Abra o [App Web](https://pulso-extrefad.pages.dev/app/), conecte seu WhatsApp Web por código de 8 dígitos ou QR Code (via Cloudflare Browser Rendering) e envie figurinhas animadas em 512 × 512 com áudio sincronizado. No PC (Chrome/Edge/Brave), você também pode instalar `Pulso-Extensao-Chrome.zip` para enviar direto para uma aba já aberta do WhatsApp Web.
 
 ### Android (`.apk`)
 1. Baixe `Pulso-Android.apk` na página de [Releases](https://github.com/dafert/pulso-ios/releases/latest).
@@ -35,10 +35,12 @@ O arquivo `Pulso-iOS.ipa` pode ser instalado por computador ou diretamente pelo 
 
 ## Estrutura do repositório
 
-- `docs/` — Site público e Web App (HTML/CSS/JS + `libwebp` WebAssembly).
+- `docs/` — Site público e Web App (Cloudflare Pages + `libwebp` WebAssembly).
+- `worker/` — Cloudflare Worker zero-dependência (`Browser Rendering` CDP) que conecta o Web App ao WhatsApp Web.
+- `extension/` — Extensão Chrome/Edge MV3 que conecta o Editor Web diretamente à aba aberta do WhatsApp Web.
 - `android/` — Projeto Android (Kotlin + `WebViewAssetLoader` + bridge de envio).
 - `Pulso/` e `project.yml` — Projeto iOS (Swift + `WKWebView` + `AVAudioConverter` Opus + XcodeGen).
-- `server/` — Ponte Node.js opcional (Express + Playwright + ffmpeg) para conectar o Web App a um servidor próprio.
+- `server/` — Ponte Node.js opcional (Express + Playwright + ffmpeg) para auto-hospedagem.
 - `.github/workflows/` — Pipelines de compilação do `.apk` e `.ipa`.
 
 ## Compilação local

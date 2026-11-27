@@ -30,6 +30,7 @@ import android.widget.LinearLayout
 import android.widget.ScrollView
 import android.widget.TextView
 import android.widget.Toast
+import androidx.activity.OnBackPressedCallback
 import androidx.activity.result.ActivityResultLauncher
 import androidx.activity.result.contract.ActivityResultContracts
 import androidx.appcompat.app.AppCompatActivity
@@ -61,6 +62,7 @@ class MainActivity : AppCompatActivity() {
     private lateinit var filePickerLauncher: ActivityResultLauncher<Intent>
 
     private val pendingRequests = ConcurrentHashMap<String, (String) -> Unit>()
+    private var activeTabIndex = 0
     private var isWhatsAppLoggedIn = false
     private var showingRawWebView = false
     private var detectedPairingCode: String? = null
@@ -130,6 +132,25 @@ class MainActivity : AppCompatActivity() {
         root.addView(bodyHost)
 
         setContentView(root)
+        onBackPressedDispatcher.addCallback(this, object : OnBackPressedCallback(true) {
+            override fun handleOnBackPressed() {
+                if (activeTabIndex == 1 && showingRawWebView) {
+                    showingRawWebView = false
+                    updateWhatsAppUI()
+                    return
+                }
+                if (activeTabIndex == 1) {
+                    showTab(0)
+                    return
+                }
+                if (editorWebView.canGoBack()) {
+                    editorWebView.goBack()
+                    return
+                }
+                isEnabled = false
+                onBackPressedDispatcher.onBackPressed()
+            }
+        })
         showTab(0)
         loadWhatsApp()
     }
@@ -147,7 +168,7 @@ class MainActivity : AppCompatActivity() {
         }
 
         tabEditorBtn = Button(this).apply {
-            text = "⚡ Editor"
+            text = "Editor"
             isAllCaps = false
             textSize = 13.5f
             setTypeface(null, Typeface.BOLD)
@@ -157,7 +178,7 @@ class MainActivity : AppCompatActivity() {
         }
 
         tabWaBtn = Button(this).apply {
-            text = "💬 Conectar WhatsApp"
+            text = "Conectar WhatsApp"
             isAllCaps = false
             textSize = 13.5f
             setTypeface(null, Typeface.BOLD)
@@ -356,7 +377,7 @@ class MainActivity : AppCompatActivity() {
         }
 
         val title = TextView(this).apply {
-            text = "🔊 Conectar WhatsApp"
+            text = "Conectar WhatsApp"
             textSize = 21f
             setTypeface(null, Typeface.BOLD)
             setTextColor(Color.WHITE)
@@ -400,7 +421,7 @@ class MainActivity : AppCompatActivity() {
         phoneRow.addView(phoneField)
 
         val genBtn = Button(this).apply {
-            text = "📲 Gerar Código de 8 Dígitos"
+            text = "Gerar código de 8 dígitos"
             isAllCaps = false
             textSize = 15.5f
             setTypeface(null, Typeface.BOLD)
@@ -448,7 +469,7 @@ class MainActivity : AppCompatActivity() {
             setPadding(0, dp(6), 0, dp(10))
         }
         val copyOpenBtn = Button(this).apply {
-            text = "📋 Copiar Código e Abrir WhatsApp"
+            text = "Copiar código e abrir WhatsApp"
             isAllCaps = false
             textSize = 15f
             setTypeface(null, Typeface.BOLD)
@@ -472,7 +493,7 @@ class MainActivity : AppCompatActivity() {
         codeBox.addView(stepsTxt)
 
         val toggleWebBtn = Button(this).apply {
-            text = "🌐 Mostrar tela do WhatsApp Web / QR Code"
+            text = "Mostrar WhatsApp Web / QR Code"
             isAllCaps = false
             textSize = 13.5f
             setTextColor(Color.parseColor("#D4C4E6"))
@@ -632,6 +653,7 @@ class MainActivity : AppCompatActivity() {
     }
 
     private fun showTab(index: Int) {
+        activeTabIndex = index
         val isEditor = (index == 0)
         editorContainer.visibility = if (isEditor) View.VISIBLE else View.GONE
         waContainer.visibility = if (isEditor) View.GONE else View.VISIBLE
@@ -647,12 +669,12 @@ class MainActivity : AppCompatActivity() {
 
     private fun updateWhatsAppUI() {
         if (isWhatsAppLoggedIn) {
-            tabWaBtn.text = "🟢 WhatsApp"
+            tabWaBtn.text = "WhatsApp conectado"
             pairingScrollView.visibility = View.GONE
             webBackBar.visibility = View.GONE
             return
         }
-        tabWaBtn.text = "💬 Conectar WhatsApp"
+        tabWaBtn.text = "Conectar WhatsApp"
         pairingScrollView.visibility = if (showingRawWebView) View.GONE else View.VISIBLE
         webBackBar.visibility = if (showingRawWebView) View.VISIBLE else View.GONE
 
@@ -728,9 +750,24 @@ class MainActivity : AppCompatActivity() {
         runOnUiThread { waWebView.evaluateJavascript(js, null) }
     }
 
+    private val safeIdRegex = Regex("^[a-zA-Z0-9_.-]{1,64}$")
+
+    private fun isSafeId(v: String): Boolean = safeIdRegex.matches(v)
+
+    private fun safeJsonLiteral(raw: String): String {
+        val trimmed = raw.trim()
+        if (trimmed == "true" || trimmed == "false" || trimmed == "null") return trimmed
+        return try {
+            JSONObject(trimmed).toString()
+        } catch (_: Exception) {
+            "{}"
+        }
+    }
+
     private fun resolveEditor(reqId: String, jsonValue: String) {
-        if (reqId.isEmpty()) return
-        val js = "window.__pulsoNativeResolve && window.__pulsoNativeResolve(\"$reqId\", $jsonValue);"
+        if (!isSafeId(reqId)) return
+        val safeVal = safeJsonLiteral(jsonValue)
+        val js = "window.__pulsoNativeResolve && window.__pulsoNativeResolve(${JSONObject.quote(reqId)}, $safeVal);"
         runOnUiThread { editorWebView.evaluateJavascript(js, null) }
     }
 
@@ -749,17 +786,27 @@ class MainActivity : AppCompatActivity() {
                     }
                     "storageGet" -> {
                         val key = obj.optString("key")
+                        if (!isSafeId(key)) {
+                            resolveEditor(reqId, "{}")
+                            return
+                        }
                         val saved = prefs.getString("k_$key", "{}") ?: "{}"
                         resolveEditor(reqId, saved)
                     }
                     "storageSet" -> {
                         val key = obj.optString("key")
                         val value = obj.optString("value", "{}")
-                        prefs.edit().putString("k_$key", value).apply()
+                        if (isSafeId(key) && value.length <= 262_144) {
+                            prefs.edit().putString("k_$key", safeJsonLiteral(value)).apply()
+                        }
                         resolveEditor(reqId, "true")
                     }
                     "waRequest" -> {
                         val what = obj.optString("what")
+                        if (what != "status" && what != "send") {
+                            resolveEditor(reqId, "{\"ok\":false,\"detail\":\"Ação não permitida.\"}")
+                            return
+                        }
                         val payload = obj.opt("payload")
                         forwardToWhatsApp(reqId, what, payload)
                     }
@@ -815,7 +862,7 @@ class MainActivity : AppCompatActivity() {
                             updateWhatsAppUI()
                             if (became) {
                                 showTab(0)
-                                Toast.makeText(this@MainActivity, "✅ WhatsApp Conectado! Pronto para figurinhas com som.", Toast.LENGTH_LONG).show()
+                                Toast.makeText(this@MainActivity, "WhatsApp conectado.", Toast.LENGTH_LONG).show()
                             }
                         }
                     }

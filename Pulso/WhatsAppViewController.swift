@@ -62,7 +62,7 @@ final class WhatsAppViewController: UIViewController, WKNavigationDelegate, WKUI
         topBar.backgroundColor = UIColor(red: 0.13, green: 0.10, blue: 0.19, alpha: 1)
         view.addSubview(topBar)
 
-        tabControl = UISegmentedControl(items: ["⚡ Editor", "💬 Conectar WhatsApp"])
+        tabControl = UISegmentedControl(items: ["Editor", "Conectar WhatsApp"])
         tabControl.translatesAutoresizingMaskIntoConstraints = false
         tabControl.selectedSegmentIndex = 0
         tabControl.selectedSegmentTintColor = UIColor(red: 0.42, green: 0.24, blue: 0.72, alpha: 1)
@@ -450,7 +450,7 @@ final class WhatsAppViewController: UIViewController, WKNavigationDelegate, WKUI
 
         let titleLabel = UILabel()
         titleLabel.translatesAutoresizingMaskIntoConstraints = false
-        titleLabel.text = "🔊 Conectar WhatsApp"
+        titleLabel.text = "Conectar WhatsApp"
         titleLabel.font = UIFont.systemFont(ofSize: 22, weight: .bold)
         titleLabel.textColor = .white
         pairingCard.addSubview(titleLabel)
@@ -509,7 +509,7 @@ final class WhatsAppViewController: UIViewController, WKNavigationDelegate, WKUI
 
         generateButton = UIButton(type: .system)
         generateButton.translatesAutoresizingMaskIntoConstraints = false
-        generateButton.setTitle("📲 Gerar Código de 8 Dígitos", for: .normal)
+        generateButton.setTitle("Gerar código de 8 dígitos", for: .normal)
         generateButton.setTitleColor(.white, for: .normal)
         generateButton.titleLabel?.font = UIFont.systemFont(ofSize: 16, weight: .bold)
         generateButton.backgroundColor = UIColor(red: 0.46, green: 0.26, blue: 0.82, alpha: 1)
@@ -554,7 +554,7 @@ final class WhatsAppViewController: UIViewController, WKNavigationDelegate, WKUI
 
         copyOpenButton = UIButton(type: .system)
         copyOpenButton.translatesAutoresizingMaskIntoConstraints = false
-        copyOpenButton.setTitle("📋 Copiar Código e Abrir WhatsApp", for: .normal)
+        copyOpenButton.setTitle("Copiar código e abrir WhatsApp", for: .normal)
         copyOpenButton.setTitleColor(.white, for: .normal)
         copyOpenButton.titleLabel?.font = UIFont.systemFont(ofSize: 15.5, weight: .bold)
         copyOpenButton.backgroundColor = UIColor(red: 0.14, green: 0.67, blue: 0.42, alpha: 1)
@@ -572,7 +572,7 @@ final class WhatsAppViewController: UIViewController, WKNavigationDelegate, WKUI
 
         toggleWebButton = UIButton(type: .system)
         toggleWebButton.translatesAutoresizingMaskIntoConstraints = false
-        toggleWebButton.setTitle("🌐 Mostrar tela do WhatsApp Web / QR Code", for: .normal)
+        toggleWebButton.setTitle("Mostrar WhatsApp Web / QR Code", for: .normal)
         toggleWebButton.setTitleColor(UIColor(white: 0.78, alpha: 1), for: .normal)
         toggleWebButton.titleLabel?.font = UIFont.systemFont(ofSize: 13.5, weight: .semibold)
         toggleWebButton.backgroundColor = UIColor(red: 0.20, green: 0.15, blue: 0.28, alpha: 1)
@@ -763,13 +763,13 @@ final class WhatsAppViewController: UIViewController, WKNavigationDelegate, WKUI
 
     private func updateWhatsAppUI() {
         if isWhatsAppLoggedIn {
-            tabControl.setTitle("🟢 WhatsApp", forSegmentAt: 1)
+            tabControl.setTitle("WhatsApp conectado", forSegmentAt: 1)
             pairingScrollView.isHidden = true
             webBackBar.isHidden = true
             webBackBarHeight.constant = 0
             return
         }
-        tabControl.setTitle("💬 Conectar WhatsApp", forSegmentAt: 1)
+        tabControl.setTitle("Conectar WhatsApp", forSegmentAt: 1)
         pairingScrollView.isHidden = showingRawWebView
         webBackBar.isHidden = !showingRawWebView
         webBackBarHeight.constant = showingRawWebView ? 40 : 0
@@ -1032,7 +1032,7 @@ final class WhatsAppViewController: UIViewController, WKNavigationDelegate, WKUI
                     self.updateWhatsAppUI()
                     if becameLoggedIn {
                         self.showTab(0)
-                        self.showAlert(title: "✅ WhatsApp Conectado!", message: "Tudo pronto! Escolha seus vídeos no Editor para criar e enviar figurinhas com som.")
+                        self.showAlert(title: "WhatsApp conectado", message: "Escolha um vídeo no Editor para criar e enviar figurinhas com som.")
                     }
                 }
                 return
@@ -1071,17 +1071,27 @@ final class WhatsAppViewController: UIViewController, WKNavigationDelegate, WKUI
 
             case "storageGet":
                 let key = body["key"] as? String ?? ""
-                let saved = UserDefaults.standard.string(forKey: "pulso_store_" + key) ?? "{}"
-                resolveEditor(reqId: reqId, jsonValue: saved)
+                guard isSafeIdentifier(key) else {
+                    resolveEditor(reqId: reqId, jsonValue: "{}")
+                    return
+                }
+                let raw = UserDefaults.standard.string(forKey: "pulso_store_" + key) ?? "{}"
+                resolveEditor(reqId: reqId, jsonValue: validatedJsonString(raw))
 
             case "storageSet":
                 let key = body["key"] as? String ?? ""
                 let value = body["value"] as? String ?? "{}"
-                UserDefaults.standard.set(value, forKey: "pulso_store_" + key)
+                if isSafeIdentifier(key) && value.utf8.count <= 262_144 {
+                    UserDefaults.standard.set(validatedJsonString(value), forKey: "pulso_store_" + key)
+                }
                 resolveEditor(reqId: reqId, jsonValue: "true")
 
             case "waRequest":
                 let what = body["what"] as? String ?? ""
+                guard what == "status" || what == "send" else {
+                    resolveEditor(reqId: reqId, jsonValue: "{\"ok\":false,\"detail\":\"Ação não permitida.\"}")
+                    return
+                }
                 let payload = body["payload"]
                 forwardToWhatsApp(reqId: reqId, what: what, payload: payload)
 
@@ -1111,6 +1121,26 @@ final class WhatsAppViewController: UIViewController, WKNavigationDelegate, WKUI
         }
     }
 
+    private func isSafeIdentifier(_ value: String) -> Bool {
+        guard !value.isEmpty, value.count <= 64 else { return false }
+        return value.unicodeScalars.allSatisfy { s in
+            (s.value >= 48 && s.value <= 57) ||
+            (s.value >= 65 && s.value <= 90) ||
+            (s.value >= 97 && s.value <= 122) ||
+            s == "_" || s == "-" || s == "."
+        }
+    }
+
+    private func validatedJsonString(_ raw: String) -> String {
+        guard let data = raw.data(using: .utf8),
+              let obj = try? JSONSerialization.jsonObject(with: data, options: [.fragmentsAllowed]),
+              let safe = try? JSONSerialization.data(withJSONObject: obj, options: [.fragmentsAllowed]),
+              let out = String(data: safe, encoding: .utf8) else {
+            return "{}"
+        }
+        return out
+    }
+
     private func forwardToWhatsApp(reqId: String, what: String, payload: Any?) {
         let msgId = UUID().uuidString.lowercased()
         pendingRequests[msgId] = { [weak self] json in
@@ -1131,17 +1161,19 @@ final class WhatsAppViewController: UIViewController, WKNavigationDelegate, WKUI
         }
         let js = "window.postMessage(\(json), location.origin);"
         waWebView.evaluateJavaScript(js) { [weak self] _, err in
-            if let err = err {
+            if err != nil {
                 self?.pendingRequests.removeValue(forKey: msgId)
-                let escaped = err.localizedDescription.replacingOccurrences(of: "\"", with: "\\\"")
-                self?.resolveEditor(reqId: reqId, jsonValue: "{\"ok\":false,\"detail\":\"WhatsApp Web indisponível: \(escaped)\"}")
+                let errObj: [String: Any] = ["ok": false, "detail": "WhatsApp Web indisponível no momento."]
+                let errJson = (try? JSONSerialization.data(withJSONObject: errObj)).flatMap { String(data: $0, encoding: .utf8) } ?? "{\"ok\":false}"
+                self?.resolveEditor(reqId: reqId, jsonValue: errJson)
             }
         }
     }
 
     private func resolveEditor(reqId: String, jsonValue: String) {
-        guard !reqId.isEmpty else { return }
-        let js = "window.__pulsoNativeResolve && window.__pulsoNativeResolve(\"\(reqId)\", \(jsonValue));"
+        guard isSafeIdentifier(reqId) else { return }
+        let safeJson = validatedJsonString(jsonValue)
+        let js = "window.__pulsoNativeResolve && window.__pulsoNativeResolve(\"\(reqId)\", \(safeJson));"
         editorWebView.evaluateJavaScript(js, completionHandler: nil)
     }
 }
